@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DFD04E41-4661-4244-8D71-594A0C6D1AC3}</ProjectGuid>
+    <RootNamespace>GravitySimulator</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <CustomBuildBeforeTargets />
+    <OutDir>$(SolutionDir)Build\Win64\$(Configuration)\</OutDir>
+    <IntDir>Build\Win64\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <CustomBuildBeforeTargets />
+    <OutDir>$(SolutionDir)Build\Win64\$(Configuration)\</OutDir>
+    <IntDir>Build\Win64\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Build\Win32\$(Configuration)\</OutDir>
+    <IntDir>Build\Win32\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Build\Win32\$(Configuration)\</OutDir>
+    <IntDir>Build\Win32\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\Users\je11b\Downloads\Frameworks\msvc15\SFML-2.5.0\64-bit\include;C:\Users\je11b\Downloads\Frameworks\msvc15\OpenGL\glew-2.0.0\include;C:\Users\je11b\Downloads\Frameworks\msvc15\OpenGL\glm-0.9.8.4</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Users\je11b\Downloads\Frameworks\msvc15\SFML-2.5.0\64-bit\lib;C:\Users\je11b\Downloads\Frameworks\msvc15\OpenGL\glew-2.0.0\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-main-d.lib;sfml-graphics-d.lib;sfml-system-d.lib;sfml-window-d.lib;glew-d.lib;OpenGL32.lib</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies />
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\Users\je11b\Downloads\Frameworks\msvc15\SFML-2.5.0\64-bit\include;C:\Users\je11b\Downloads\Frameworks\msvc15\OpenGL\glew-2.0.0\include;C:\Users\je11b\Downloads\Frameworks\msvc15\OpenGL\glm-0.9.8.4</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>C:\Users\je11b\Downloads\Frameworks\msvc15\SFML-2.5.0\64-bit\lib;C:\Users\je11b\Downloads\Frameworks\msvc15\OpenGL\glew-2.0.0\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-main.lib;sfml-graphics.lib;sfml-system.lib;sfml-window.lib;glew.lib;OpenGL32.lib</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Engine\Display\Camera.cpp" />
+    <ClCompile Include="Engine\Display\Entity.cpp" />
+    <ClCompile Include="Engine\Display\Mesh.cpp" />
+    <ClCompile Include="Engine\Display\MeshGeneration.cpp" />
+    <ClCompile Include="Engine\Display\Shader.cpp" />
+    <ClCompile Include="Engine\Display\Texture.cpp" />
+    <ClCompile Include="Engine\Physics\BodiesArray.cpp" />
+    <ClCompile Include="Engine\Physics\Body.cpp" />
+    <ClCompile Include="Engine\Physics\PhysicsEngine.cpp" />
+    <ClCompile Include="Engine\Physics\PhysicsType.cpp" />
+    <ClCompile Include="Engine\Physics\Serializer.cpp" />
+    <ClCompile Include="Engine\Physics\System.cpp" />
+    <ClCompile Include="Game\Application.cpp" />
+    <ClCompile Include="Game\States\PausedSimulationState.cpp" />
+    <ClCompile Include="Game\States\SaveSimulationState.cpp" />
+    <ClCompile Include="Game\States\SimulationState.cpp" />
+    <ClCompile Include="Game\States\State.cpp" />
+    <ClCompile Include="Game\States\StateStack.cpp" />
+    <ClCompile Include="Game\States\TestSimulationState.cpp" />
+    <ClCompile Include="Game\States\TitleState.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\Core\ResourceHolder.h" />
+    <ClInclude Include="Engine\Display\Camera.h" />
+    <ClInclude Include="Engine\Display\Entity.h" />
+    <ClInclude Include="Engine\Display\Mesh.h" />
+    <ClInclude Include="Engine\Display\MeshGeneration.h" />
+    <ClInclude Include="Engine\Display\Shader.h" />
+    <ClInclude Include="Engine\Display\stb_image.h" />
+    <ClInclude Include="Engine\Display\Texture.h" />
+    <ClInclude Include="Engine\Physics\BodiesArray.h" />
+    <ClInclude Include="Engine\Physics\Body.h" />
+    <ClInclude Include="Engine\Physics\PhysicsEngine.h" />
+    <ClInclude Include="Engine\Physics\PhysicsType.h" />
+    <ClInclude Include="Engine\Physics\Serializer.h" />
+    <ClInclude Include="Engine\Physics\System.h" />
+    <ClInclude Include="Game\Application.h" />
+    <ClInclude Include="Game\ResourceIdentifiers.h" />
+    <ClInclude Include="Game\States\PausedSimulationState.h" />
+    <ClInclude Include="Game\States\SaveSimulationState.h" />
+    <ClInclude Include="Game\States\SimulationState.h" />
+    <ClInclude Include="Game\States\State.h" />
+    <ClInclude Include="Game\States\StateIdentifiers.h" />
+    <ClInclude Include="Game\States\StateStack.h" />
+    <ClInclude Include="Game\States\TestSimulationState.h" />
+    <ClInclude Include="Game\States\TitleState.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine\Core\ResourceHolder.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

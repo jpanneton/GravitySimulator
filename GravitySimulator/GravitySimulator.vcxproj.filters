@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Engine\Display\Camera.cpp">
+      <Filter>Engine\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Display\Entity.cpp">
+      <Filter>Engine\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Display\Mesh.cpp">
+      <Filter>Engine\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Display\MeshGeneration.cpp">
+      <Filter>Engine\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Display\Shader.cpp">
+      <Filter>Engine\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Display\Texture.cpp">
+      <Filter>Engine\Display</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\BodiesArray.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\Body.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\PhysicsEngine.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\PhysicsType.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\System.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\PausedSimulationState.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\SaveSimulationState.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\SimulationState.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\TestSimulationState.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\TitleState.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\Serializer.cpp">
+      <Filter>Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\State.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\States\StateStack.cpp">
+      <Filter>Game\States</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Application.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{6c367d03-ac81-4e5f-9a76-0d4c872b209d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{26c6728b-5734-4698-81b8-5150a0ea99a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Core">
+      <UniqueIdentifier>{7ea55ffd-cd77-483e-ac85-255acaa5cd3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Display">
+      <UniqueIdentifier>{49fe000a-5b2f-49ed-9d4e-ac357e384ac0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Physics">
+      <UniqueIdentifier>{6e825ff2-1acf-45e9-9c83-50aa2d847ae5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\States">
+      <UniqueIdentifier>{9ed02f9c-ce76-43b6-bc58-f01b36cda59b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\Display\Camera.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Display\Entity.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Display\Mesh.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Display\MeshGeneration.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Display\Shader.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Display\stb_image.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Display\Texture.h">
+      <Filter>Engine\Display</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\BodiesArray.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\Body.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\PhysicsEngine.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\PhysicsType.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\System.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Core\ResourceHolder.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\ResourceIdentifiers.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\PausedSimulationState.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\SaveSimulationState.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\SimulationState.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\StateIdentifiers.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\TestSimulationState.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\TitleState.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\Serializer.h">
+      <Filter>Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\State.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\States\StateStack.h">
+      <Filter>Game\States</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Application.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine\Core\ResourceHolder.inl">
+      <Filter>Engine\Core</Filter>
+    </None>
+  </ItemGroup>
+</Project>
