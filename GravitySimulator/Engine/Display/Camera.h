@@ -1,69 +1,142 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
-// An abstract camera class that processes input and calculates the corresponding Eular Angles, Vectors and Matrices for use in OpenGL
 class Camera
 {
 public:
-    // Default camera values
-    static constexpr float DefaultYaw = -90.0f;
-    static constexpr float DefaultPitch = 0.0f;
-    static constexpr float SlowSpeed = 0.5f;
-    static constexpr float DefaultSpeed = 3.0f;
-    static constexpr float FastSpeed = 50.0f;
-    static constexpr float DefaultSensitivity = 0.1f;
+    using MatrixType = glm::mat4;
+    using VectorType = glm::vec3;
+    using QuaternionType = glm::quat;
+    
+    static constexpr float DefaultPitch = {};
+    static constexpr float DefaultYaw = {};
     static constexpr float DefaultFov = 45.0f;
-    static inline const glm::vec3 DefaultPosition = glm::vec3(0.f, 0.f, 100.f);
 
-    enum class Movement
-    {
-        Forward,
-        Backward,
-        Left,
-        Right,
-        Up,
-        Down
-    };
-
-public:
-    // Constructor with vectors
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = -90.0f, float pitch = 0.0f);
-
-    // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
-    glm::mat4 getViewMatrix() const;
+    virtual MatrixType getViewMatrix() const = 0;
 
     float getFov() const;
 
-    // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void processKeyboard(Movement direction);
+protected:
+    // Euler Angles
+    float m_pitch = DefaultPitch; // Rotation around X-axis in radians (elevation: up and down)
+    float m_yaw = DefaultYaw;     // Rotation around Y-axis in radians (azimuth: left and right)
+    float m_fov = DefaultFov;
+};
 
-    // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void processMouseMovement(float deltaX, float deltaY, bool constrainPitch = true);
+//--------------------------------------------------------------------------------------------
+/// Generates orbital camera transformations from mouse input events and a set of parameters.
+//--------------------------------------------------------------------------------------------
+class DraggableOrbitCamera : public Camera
+{
+    static constexpr float MinRadius = 5.0f;
+    static constexpr float MaxRadius = 100'000.0f;
+    static constexpr float SmoothFactor = 0.1f; // 0 = no transformation smoothing
 
-    // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void processMouseScroll(float deltaY);
+    static_assert(MinRadius > 0.0f && MaxRadius > 0.0f);
+    static_assert(MaxRadius >= MinRadius);
+    static_assert(SmoothFactor >= 0.0f && SmoothFactor < 1.0f);
 
-    glm::vec3 position() const;
-    glm::vec3 front() const;
+public:
+    //----------------------------------------------------------------------------------------
+    /// Constructor.
+    /// @param[in] orbitalRadius			Distance from the center point (point where the camera is pointing).
+    /// @param[in] center                   Center point in world coordinates.
+    //----------------------------------------------------------------------------------------
+    DraggableOrbitCamera(float orbitalRadius = MinRadius, const VectorType& center = {}) noexcept;
 
-    void setSpeed(float speed);
+    //----------------------------------------------------------------------------------------
+    /// Sets the frame of the camera.
+    /// @param[in] frame			        Viewport frame.
+    //----------------------------------------------------------------------------------------
+    void setViewport(const glm::ivec2& frame) noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Sets the distance from the center point.
+    /// @see DraggableOrbitCamera::zoom
+    /// @param[in] radius					Distance from the center point (point where the camera is pointing).
+    //----------------------------------------------------------------------------------------
+    void setOrbitalRadius(float radius) noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Moves the camera towards the center point.
+    /// @see DraggableOrbitCamera::setOrbitalRadius
+    /// @param[in] delta					Distance to move the camera towards the center point.
+    /// @param[in] scaled					If true, linear scaling will be applied to the zoom.
+    //----------------------------------------------------------------------------------------
+    void zoom(float delta, bool scaled = true) noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Returns the distance from the center point.
+    /// @return								Orbital radius.
+    //----------------------------------------------------------------------------------------
+    float getOrbitalRadius() const noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Sets the point where the camera is pointing (center of gravity).
+    /// @see DraggableOrbitCamera::moveCenter
+    /// @param[in] center					Center point in world coordinates.
+    //----------------------------------------------------------------------------------------
+    void setCenter(const VectorType& center) noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Moves the point where the camera is pointing (center of gravity).
+    /// @see DraggableOrbitCamera::setCenter
+    /// @param[in] delta					Delta to move the center point.
+    //----------------------------------------------------------------------------------------
+    void moveCenter(const VectorType& delta) noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Returns the point where the camera is pointing (center of gravity).
+    /// @return								Orbital center.
+    //----------------------------------------------------------------------------------------
+    VectorType getCenter() const noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Returns the position of the camera in world space.
+    /// @return								Camera position.
+    //----------------------------------------------------------------------------------------
+    VectorType getPosition() const noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Returns the transformation matrix of the current camera state.
+    /// @return								View matrix.
+    //----------------------------------------------------------------------------------------
+    MatrixType getViewMatrix() const override;
+
+    //----------------------------------------------------------------------------------------
+    /// Returns the front vector of the camera.
+    /// @return								Front vector.
+    //----------------------------------------------------------------------------------------
+    VectorType getDirection() const;
+
+    //----------------------------------------------------------------------------------------
+    /// Updates the camera transformations.
+    //----------------------------------------------------------------------------------------
+    void update() noexcept;
+
+    //----------------------------------------------------------------------------------------
+    /// Mouse drag event callback.
+    /// @param[in] mouseDelta				Mouse delta.
+    //----------------------------------------------------------------------------------------
+    void mouseDrag(const glm::vec2& mouseDelta) noexcept;
 
 private:
-    // Calculates the front vector from the Camera's (updated) Eular Angles
-    void updateCameraVectors();
+    //----------------------------------------------------------------------------------------
+    /// Converts a mouse drag in pixels to a normalized delta (between -1 and 1).
+    /// Allows dragging to be relative to the viewport size.
+    /// @param[in] mouseDrag			    Mouse delta in pixels.
+    /// @return								Normalized mouse position.
+    //----------------------------------------------------------------------------------------
+    glm::vec2 mouseDeltaToProportion(const glm::vec2& mouseDelta) const noexcept;
 
-    // Camera Attributes
-    glm::vec3 m_position;
-    glm::vec3 m_front;
-    glm::vec3 m_up;
-    glm::vec3 m_right;
-    glm::vec3 m_worldUp;
-    // Euler Angles
-    float m_yaw; // Left & Right : rotation around Y-axis
-    float m_pitch; // Up & Down : rotation around X-axis
-    // Camera options
-    float m_movementSpeed;
-    float m_mouseSensitivity;
-    float m_fov;
+    float m_radius = {};				/// Distance of the camera from the center point.
+    VectorType m_center;                /// Point where the camera is pointing (center of gravity).
+    glm::ivec2 m_frame;				    /// Frame of the camera.
+    QuaternionType m_baseQuaternion;	/// Rotation axis quaternion.
+    QuaternionType m_quaternion;		/// Camera quaternion.
+
+    glm::vec2 m_lastMouseDrag;          /// Last mouse drag delta.
+    float m_lastZoom = {};              /// Last zoom delta.
 };

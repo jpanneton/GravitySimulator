@@ -9,20 +9,13 @@ SimulationState::SimulationState(StateStack & stack, Context context)
     : State(stack, context)
     , m_materialTextures{ *getContext().materialTextures }
     , m_skyBoxTextures{ *getContext().skyBoxTextures }
-    , m_camera(Camera::DefaultPosition)
-    , m_lastX{ 400.0f }
-    , m_lastY{ 300.0f }
     , m_windowSize{ getContext().window->getSize()  }
-    , m_bodyMass{ DefaultBodyMass }
-    , m_bodyVelocity{ 10.f }
 {
     getContext().window->setMouseCursorGrabbed(true);
     getContext().window->setMouseCursorVisible(false);
 
-    sf::Mouse::setPosition(sf::Vector2i{ (int)m_windowSize.x / 2, (int)m_windowSize.y / 2 },*getContext().window);
-    m_lastX = static_cast<GLfloat>(m_windowSize.x / 2);
-    m_lastY = static_cast<GLfloat>(m_windowSize.y / 2);
-    
+    sf::Mouse::setPosition({ static_cast<int>(m_windowSize.x) / 2, static_cast<int>(m_windowSize.y) / 2 }, *getContext().window);
+
     m_crosshairSprite.setTexture(context.textures->get(TexturesID::Crosshair));
     m_crosshairSprite.setPosition(m_windowSize.x / 2 - m_crosshairSprite.getGlobalBounds().width / 2, m_windowSize.y / 2 - m_crosshairSprite.getGlobalBounds().height / 2);
 
@@ -38,12 +31,13 @@ SimulationState::SimulationState(StateStack & stack, Context context)
     deserializeBodies(std::ifstream{ getContext().selectedSystem->c_str() }, bodies);
     *getContext().system = System{ bodies, PhysicsEngine{} };
 
+    initCamera(bodies);
     loadSimulationControls();
 }
 
 bool SimulationState::update(sf::Time dt)
 {
-    moveCamera();
+    m_camera.update();
     getContext().system->update(dt);
     return true;
 }
@@ -60,30 +54,43 @@ bool SimulationState::handleEvent(const sf::Event& event)
     }
     if (event.type == sf::Event::MouseMoved)
     {
-        float dx = event.mouseMove.x - m_windowSize.x / 2.0f;
-        float dy = event.mouseMove.y - m_windowSize.y / 2.0f;
-        m_camera.processMouseMovement(dx, -dy);
-        
+        if (m_mouseDrag)
+        {
+            float dx = m_windowSize.x / 2.0f - event.mouseMove.x;
+            float dy = m_windowSize.y / 2.0f - event.mouseMove.y;
+            m_camera.mouseDrag({ dx, -dy });
+        }
+
         // Reset mouse position
         sf::Mouse::setPosition({ static_cast<int>(m_windowSize.x) / 2, static_cast<int>(m_windowSize.y) / 2 }, *getContext().window);
     }
+    if (event.type == sf::Event::MouseWheelMoved)
+    {
+        m_camera.zoom(1000.0f * event.mouseWheel.delta);
+    }
     if (event.type == sf::Event::KeyPressed)
     {	
-        controlSimulation(event.key.code);
-        setMode(event.key.code, event.type);
+        if (event.key.code == sf::Keyboard::S)
+        {
+            m_showCrosshair = true;
+        }
+        else
+        {
+            controlSimulation(event.key.code);
+            setMode(event.key.code, event.type);
+        }
     }
     if (event.type == sf::Event::KeyReleased)
     {
-        setMode(event.key.code, event.type);
-    }
-    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
-    {
-        m_showCrosshair = true;
-    }
-    if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
-    {
-        m_showCrosshair = false;
-        shootBody();
+        if (event.key.code == sf::Keyboard::S)
+        {
+            m_showCrosshair = false;
+            shootBody();
+        }
+        else
+        {
+            setMode(event.key.code, event.type);
+        }
     }
     
     return true;
@@ -109,6 +116,7 @@ void SimulationState::drawSkyBox()
 {
     glDepthMask(GL_FALSE);
     m_shaderSky.bind();
+
     // Transformations
     glm::mat4 viewSky = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
     glm::mat4 projectionSky = glm::perspective(glm::radians(m_camera.getFov()), static_cast<float>(m_windowSize.x) / m_windowSize.y, NearClip, FarClip);
@@ -135,9 +143,9 @@ void SimulationState::drawSimulationControls()
 void SimulationState::drawBodies()
 {
     m_shaderObject.bind();
+
     // Transformations
     glm::mat4 view = m_camera.getViewMatrix();
-
     glm::mat4 projection = glm::perspective(glm::radians(m_camera.getFov()), static_cast<float>(m_windowSize.x) / m_windowSize.y, NearClip, FarClip);
 
     GLint viewLocation = glGetUniformLocation(m_shaderObject.id(), "view");
@@ -161,7 +169,6 @@ void SimulationState::drawBodies()
 void SimulationState::setSlowMode()
 {
     m_slowMode = true;
-    m_camera.setSpeed(Camera::SlowSpeed);
     m_controlValuesStep[SimulationControlID::Velocity] = SlowVelocityMassStep;
     m_controlValuesStep[SimulationControlID::Mass] = SlowBodyMassStep;
 }
@@ -169,7 +176,6 @@ void SimulationState::setSlowMode()
 void SimulationState::setNormalMode()
 {
     m_slowMode = m_fastMode = false;
-    m_camera.setSpeed(Camera::DefaultSpeed);
     m_controlValuesStep[SimulationControlID::Velocity] = DefaultVelocityMassStep;
     m_controlValuesStep[SimulationControlID::Mass] = DefaultBodyMassStep;
 }
@@ -177,38 +183,8 @@ void SimulationState::setNormalMode()
 void SimulationState::setFastMode()
 {
     m_fastMode = true;
-    m_camera.setSpeed(Camera::FastSpeed);
     m_controlValuesStep[SimulationControlID::Velocity] = FastVelocityMassStep;
     m_controlValuesStep[SimulationControlID::Mass] = FastBodyMassStep;
-}
-
-void SimulationState::moveCamera()
-{	
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-    {
-        m_camera.processKeyboard(Camera::Movement::Forward);
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-    {
-        m_camera.processKeyboard(Camera::Movement::Backward);
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-    {			
-        m_camera.processKeyboard(Camera::Movement::Left);	
-    }
-    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-    {
-        m_camera.processKeyboard(Camera::Movement::Right);
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-    {
-        m_camera.processKeyboard(Camera::Movement::Up);
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
-    {
-        m_camera.processKeyboard(Camera::Movement::Down);
-    }
-
 }
 
 void SimulationState::controlSimulation(sf::Keyboard::Key key)
@@ -274,7 +250,6 @@ void SimulationState::resetSystem()
     deserializeBodies(std::ifstream{ *getContext().selectedSystem }, bodies);
     *getContext().system = System{ bodies, PhysicsEngine{} };
 
-    m_camera = { Camera::DefaultPosition };
     setNormalMode();
 
     setSimulationControlValue(SimulationControlID::Timescale, getContext().system->timescale());
@@ -282,6 +257,35 @@ void SimulationState::resetSystem()
     setSimulationControlValue(SimulationControlID::Mass, m_bodyMass);
     m_bodyVelocity = 10.f;
     setSimulationControlValue(SimulationControlID::Velocity, m_bodyVelocity);
+}
+
+void SimulationState::initCamera(const BodiesArray& bodies)
+{
+    scalar totalMass = {};
+    for (const Body& body : bodies)
+    {
+        totalMass += body.mass();
+    }
+
+    glm::vec3 averagePosition;
+    for (const Body& body : bodies)
+    {
+        averagePosition += (body.mass() / totalMass) * body.position();
+    }
+
+    scalar farthestBodyDistance = std::numeric_limits<scalar>::lowest();
+    for (const Body& body : bodies)
+    {
+        const scalar distance = glm::distance(body.position(), averagePosition);
+        if (distance > farthestBodyDistance)
+        {
+            farthestBodyDistance = distance;
+        }
+    }
+
+    m_camera.setOrbitalRadius(3 * farthestBodyDistance);
+    m_camera.setCenter(averagePosition);
+    m_camera.setViewport({ m_windowSize.x, m_windowSize.y });
 }
 
 void SimulationState::loadSimulationControls()
@@ -431,6 +435,7 @@ void SimulationState::decreaseControlValue()
 
 void SimulationState::shootBody()
 {
-    Body body{ m_camera.position() + (m_camera.front() * Body::radiusFromMass(m_bodyMass)), m_camera.front() * m_bodyVelocity, m_bodyMass, m_bodyMaterial };
+    const glm::vec3 cameraDirection = m_camera.getDirection();
+    Body body{ m_camera.getPosition() + (cameraDirection * Body::radiusFromMass(m_bodyMass)), cameraDirection * m_bodyVelocity, m_bodyMass, m_bodyMaterial };
     getContext().system->addBody(body);
 }

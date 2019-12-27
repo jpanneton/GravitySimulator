@@ -6,7 +6,7 @@
 class BodiesArray
 {
 public:
-    static const std::size_t MAX_BODIES = 20'000;
+    static const size_t MAX_BODIES = 20'000;
 
     using value_type = Body;
     using container = std::vector<value_type>;
@@ -18,6 +18,7 @@ public:
 
     void push_back(const Body& body);
     void merge(iterator target, iterator source);
+    size_t size() const;
 
     iterator begin();
     iterator end();

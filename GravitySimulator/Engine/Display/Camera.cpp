@@ -1,123 +1,134 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-    : m_position(position)
-    , m_front(glm::vec3(0.0f, 0.0f, -1.0f))
-    , m_worldUp(up)
-    , m_yaw(yaw)
-    , m_pitch(pitch)
-    , m_movementSpeed(DefaultSpeed)
-    , m_mouseSensitivity(DefaultSensitivity)
-    , m_fov(DefaultFov)
-{
-    updateCameraVectors();
-}
-
-glm::mat4 Camera::getViewMatrix() const
-{
-    return glm::lookAt(m_position, m_position + m_front, m_up);
-}
-
 float Camera::getFov() const
 {
     return m_fov;
 }
 
-void Camera::processKeyboard(Movement direction)
+//------------------------------------------------------------------------
+
+DraggableOrbitCamera::DraggableOrbitCamera(float orbitalRadius, const VectorType& center) noexcept
+    : m_baseQuaternion(glm::angleAxis(0.0f, VectorType(0.0f, 1.0f, 0.0f))) // Y-axis
+    , m_quaternion(m_baseQuaternion)
 {
-    const float velocity = m_movementSpeed;
-    if (direction == Movement::Forward)
-    {
-        m_position += m_front * velocity;
-    }
-    else if (direction == Movement::Backward)
-    {
-        m_position -= m_front * velocity;
-    }
-    else if (direction == Movement::Left)
-    {
-        m_position -= m_right * velocity;
-    }
-    else if (direction == Movement::Right)
-    {
-        m_position += m_right * velocity;
-    }
-    else if (direction == Movement::Up)
-    {
-        m_position += m_up * velocity;
-    }
-    else if (direction == Movement::Down)
-    {
-        m_position += m_up * -velocity;
-    }
+    setOrbitalRadius(orbitalRadius);
+    setCenter(center);
 }
 
-void Camera::processMouseMovement(float deltaX, float deltaY, bool constrainPitch)
+void DraggableOrbitCamera::setViewport(const glm::ivec2& frame) noexcept
 {
-    deltaX *= m_mouseSensitivity;
-    deltaY *= m_mouseSensitivity;
+    m_frame = frame;
+}
 
-    m_yaw = glm::mod(m_yaw + deltaX, 360.0f);
-    m_pitch += deltaY;
+void DraggableOrbitCamera::setOrbitalRadius(float radius) noexcept
+{
+    m_radius = glm::max(MinRadius, glm::min(radius, MaxRadius));
+}
 
-    // Make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (constrainPitch)
+void DraggableOrbitCamera::zoom(float delta, bool scaled) noexcept
+{
+    if (scaled)
     {
-        if (m_pitch > 89.0f)
-        {
-            m_pitch = 89.0f;
-        }
-        else if (m_pitch < -89.0f)
-        {
-            m_pitch = -89.0f;
-        }
+        // The higher the value, the faster it takes to zoom out when completely zoomed in
+        constexpr float minZoomRadius = 10.0f;
+        // Otherwise, produces a null ratio when completely zoomed in (i.e. can't zoom out)
+        static_assert(minZoomRadius > 0.0f);
+        delta *= ((m_radius - MinRadius + minZoomRadius) / (MaxRadius - MinRadius + minZoomRadius));
     }
-
-    // Update Front, Right and Up Vectors using the updated Eular angles
-    updateCameraVectors();
+    m_lastZoom += delta;
 }
 
-void Camera::processMouseScroll(float deltaY)
+float DraggableOrbitCamera::getOrbitalRadius() const noexcept
 {
-    if (m_fov >= 1.0f && m_fov <= 45.0f)
-    {
-        m_fov -= deltaY;
-    }
-    if (m_fov <= 1.0f)
-    {
-        m_fov = 1.0f;
-    }
-    if (m_fov >= 45.0f)
-    {
-        m_fov = 45.0f;
-    }
+    return m_radius;
 }
 
-glm::vec3 Camera::position() const
+void DraggableOrbitCamera::setCenter(const VectorType& center) noexcept
 {
-    return m_position;
+    m_center = center;
 }
 
-glm::vec3 Camera::front() const
+void DraggableOrbitCamera::moveCenter(const VectorType& delta) noexcept
 {
-    return m_front;
+    VectorType cameraVector = getPosition();
+    cameraVector.y = 0.0f;
+    cameraVector = glm::normalize(cameraVector);
+    m_center += delta.x * VectorType(cameraVector.z, 0.0f, -cameraVector.x);
+    m_center += delta.z * cameraVector;
+    m_center.y = m_center.y + delta.y;
 }
 
-void Camera::setSpeed(float speed)
+DraggableOrbitCamera::VectorType DraggableOrbitCamera::getCenter() const noexcept
 {
-    m_movementSpeed = speed;
+    return m_center;
 }
 
-void Camera::updateCameraVectors()
+DraggableOrbitCamera::VectorType DraggableOrbitCamera::getPosition() const noexcept
 {
-    // Calculate the new Front vector
-    glm::vec3 front;
-    front.x = glm::cos(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
-    front.y = glm::sin(glm::radians(m_pitch));
-    front.z = glm::sin(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
-    m_front = glm::normalize(front);
-    // Also re-calculate the Right and Up vector
-    m_right = glm::normalize(glm::cross(m_front, m_worldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    m_up = glm::normalize(glm::cross(m_right, m_front));
+    return m_center + m_quaternion * VectorType(0.0f, 0.0f, m_radius);
+}
+
+DraggableOrbitCamera::MatrixType DraggableOrbitCamera::getViewMatrix() const
+{
+    // https://www.3dgep.com/understanding-the-view-matrix/#Arcball_Orbit_Camera
+    // The view matrix is the inverse of the camera's transformation matrix
+    // In fact, a camera is an abstract concept and the whole world is being transformed
+
+    // Instead of creating a transformation matrix and inverting it, we can optimize this
+    // by pre-inverting the operations and swapping the order of multiplication
+
+    // Orbital radius translation (pre-inverted)
+    MatrixType T0 = glm::translate(MatrixType(), -VectorType(0.0f, 0.0f, m_radius));
+    // Orbital rotation (pre-inverted)
+    MatrixType R = glm::toMat4(glm::inverse(m_quaternion));
+    // Orbital center rotation (pre-inverted)
+    MatrixType T1 = glm::translate(MatrixType(), -m_center);
+    // View matrix (order of multiplication swapped)
+    return T0 * R * T1;
+}
+
+DraggableOrbitCamera::VectorType DraggableOrbitCamera::getDirection() const
+{
+    return -glm::normalize(m_quaternion * VectorType(0.0f, 0.0f, m_radius));
+}
+
+void DraggableOrbitCamera::update() noexcept
+{
+    // Move camera
+    const glm::vec2 newMouseDelta = mouseDeltaToProportion(m_lastMouseDrag);
+    m_pitch += newMouseDelta.y;
+    m_yaw = glm::mod(m_yaw + newMouseDelta.x, glm::two_pi<float>());
+
+    constexpr float epsilon = 0.001f;
+
+    if (m_pitch > glm::pi<float>() / 2.0f - epsilon)
+        m_pitch = glm::pi<float>() / 2.0f - epsilon;
+    if (m_pitch < -(glm::pi<float>() / 2.0f - epsilon))
+        m_pitch = -(glm::pi<float>() / 2.0f - epsilon);
+
+    QuaternionType pitchQuat = glm::angleAxis(m_pitch, VectorType(1.0f, 0.0f, 0.0f));
+    QuaternionType yawQuat = glm::angleAxis(m_yaw, VectorType(0.0f, 1.0f, 0.0f));
+    m_quaternion = m_baseQuaternion * glm::normalize(yawQuat * pitchQuat);
+
+    // Zoom camera
+    setOrbitalRadius(m_radius - m_lastZoom);
+
+    // Smooth transformations for next update
+    m_lastMouseDrag *= (1.0f - SmoothFactor);
+    m_lastZoom *= (1.0f - SmoothFactor);
+}
+
+void DraggableOrbitCamera::mouseDrag(const glm::vec2& mouseDelta) noexcept
+{
+    m_lastMouseDrag = mouseDelta;
+}
+
+glm::vec2 DraggableOrbitCamera::mouseDeltaToProportion(const glm::vec2& mouseDelta) const noexcept
+{
+    // setViewport() must be called before any mouse input callbacks!
+    assert(m_frame.x > 0 && m_frame.y > 0);
+
+    const float scale = glm::min(m_frame.x, m_frame.y) / 2.0f;
+    return { mouseDelta.x / scale, -mouseDelta.y / scale };
 }

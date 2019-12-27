@@ -29,6 +29,11 @@ void BodiesArray::merge(iterator target, iterator source)
     m_bodies.pop_back();
 }
 
+size_t BodiesArray::size() const
+{
+    return m_bodies.size();
+}
+
 BodiesArray::iterator BodiesArray::begin()
 {
     return std::begin(m_bodies);

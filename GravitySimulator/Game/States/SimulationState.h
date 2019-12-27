@@ -39,7 +39,7 @@ public:
 private: 
     std::vector<Texture> m_materialTextures;
     std::vector<Texture> m_skyBoxTextures;
-    Camera m_camera;
+    DraggableOrbitCamera m_camera;
 
     bool m_mouseDrag = false;
 
@@ -47,8 +47,6 @@ private:
     Shader m_shaderSky;
     Entity m_entity;
     Entity m_entitySkyBox;
-    GLfloat m_lastX;
-    GLfloat m_lastY;
     sf::Vector2<unsigned> m_windowSize;
 
     SimulationControlID m_selectedControl;
@@ -71,9 +69,10 @@ private:
 
     static constexpr scalar DefaultBodyMass = 100.f;
 
-    scalar m_bodyMass;
-    scalar m_bodyVelocity;
-    Material m_bodyMaterial;
+    scalar m_bodyMass = DefaultBodyMass;
+    scalar m_bodyVelocity = 10.0f;
+    Material m_bodyMaterial = {};
+
     sf::Sprite m_crosshairSprite;
     bool m_showCrosshair = false;
 
@@ -83,7 +82,6 @@ private:
     void setNormalMode();
     void setFastMode();
 
-    void moveCamera();
     void controlSimulation(sf::Keyboard::Key);
     void setMode(sf::Keyboard::Key, sf::Event::EventType);
     void resetSystem();
@@ -91,6 +89,7 @@ private:
     void drawSkyBox();
     void drawSimulationControls();
 
+    void initCamera(const BodiesArray& bodies);
     void loadSimulationControls();
     void setSimulationControlPositions();
     void setSimulationControlValue(SimulationControlID id, scalar value);

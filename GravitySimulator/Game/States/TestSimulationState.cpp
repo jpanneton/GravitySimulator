@@ -7,16 +7,9 @@ TestSimulationState::TestSimulationState(StateStack & stack, Context context)
     : State{ stack, context }
     , m_materialTextures{ *getContext().materialTextures }
     , m_skyBoxTextures{ *getContext().skyBoxTextures }
-    , m_camera(Camera::DefaultPosition)
-    , m_lastX{ 400.0f }
-    , m_lastY{ 300.0f }
     , m_windowSize{ getContext().window->getSize() }
-    , m_bodyMass{ DefaultBodyMass }
-    , m_bodyVelocity{ 10.f }
 {
-    sf::Mouse::setPosition(sf::Vector2i{ (int)m_windowSize.x / 2, (int)m_windowSize.y / 2 }, *getContext().window);
-    m_lastX = static_cast<GLfloat>(m_windowSize.x / 2);
-    m_lastY = static_cast<GLfloat>(m_windowSize.y / 2);
+    sf::Mouse::setPosition({ static_cast<int>(m_windowSize.x) / 2, static_cast<int>(m_windowSize.y) / 2 }, *getContext().window);
 
     // Bodies shader and mesh
     m_shaderObject.loadShader("Resources/Shaders/Planet.vert", "Resources/Shaders/Planet.frag");
@@ -27,9 +20,10 @@ TestSimulationState::TestSimulationState(StateStack & stack, Context context)
     m_entitySkyBox = { MeshGeneration::generateSkyBox(m_skyBoxTextures) };
 
     BodiesArray bodies;
-    deserializeBodies(std::ifstream{ "Systems/Aléatoire.txt" }, bodies);
+    deserializeBodies(std::ifstream{ "Systems/Random.txt" }, bodies);
     *getContext().system = System{ bodies, PhysicsEngine{} };
 
+    initCamera(bodies);
     loadSimulationControls();
 }
 
@@ -61,6 +55,7 @@ void TestSimulationState::drawSkyBox()
 {
     glDepthMask(GL_FALSE);
     m_shaderSky.bind();
+
     // Transformations
     glm::mat4 viewSky = glm::mat4(glm::mat3(m_camera.getViewMatrix()));
     glm::mat4 projectionSky = glm::perspective(glm::radians(m_camera.getFov()), static_cast<float>(m_windowSize.x) / m_windowSize.y, NearClip, FarClip);
@@ -84,11 +79,12 @@ void TestSimulationState::drawSimulationControls()
         getContext().window->draw(value);
 }
 
-void TestSimulationState::drawBodies() {
+void TestSimulationState::drawBodies()
+{
     m_shaderObject.bind();
+
     // Transformations
     glm::mat4 view = m_camera.getViewMatrix();
-
     glm::mat4 projection = glm::perspective(glm::radians(m_camera.getFov()), static_cast<float>(m_windowSize.x) / m_windowSize.y, NearClip, FarClip);
 
     GLint viewLocation = glGetUniformLocation(m_shaderObject.id(), "view");
@@ -107,6 +103,35 @@ void TestSimulationState::drawBodies() {
     });
     glBindVertexArray(0);
     m_shaderObject.unbind();
+}
+
+void TestSimulationState::initCamera(const BodiesArray& bodies)
+{
+    scalar totalMass = {};
+    for (const Body& body : bodies)
+    {
+        totalMass += body.mass();
+    }
+
+    glm::vec3 averagePosition;
+    for (const Body& body : bodies)
+    {
+        averagePosition += (body.mass() / totalMass) * body.position();
+    }
+
+    scalar farthestBodyDistance = std::numeric_limits<scalar>::lowest();
+    for (const Body& body : bodies)
+    {
+        const scalar distance = glm::distance(body.position(), averagePosition);
+        if (distance > farthestBodyDistance)
+        {
+            farthestBodyDistance = distance;
+        }
+    }
+
+    m_camera.setOrbitalRadius(3 * farthestBodyDistance);
+    m_camera.setCenter(averagePosition);
+    m_camera.setViewport({ m_windowSize.x, m_windowSize.y });
 }
 
 void TestSimulationState::loadSimulationControls()

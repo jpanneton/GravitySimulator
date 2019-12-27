@@ -8,7 +8,8 @@ using vec3 = glm::vec3;
 
 constexpr scalar PI = glm::pi<scalar>();
 
-enum Material {
+enum Material
+{
     ceres = 0,
     earth,
     eris,
