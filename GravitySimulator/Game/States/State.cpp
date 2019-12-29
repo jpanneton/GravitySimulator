@@ -8,7 +8,7 @@ State::Context::Context(sf::RenderWindow& window, TextureHolder& textures, FontH
     , selectedSystem{ &selectedSystem }
     , materialTextures{ &materialTextures}
     , skyBoxTextures{ &skyBoxTextures }
-    , system { &system }
+    , system{ &system }
 {
 }
 

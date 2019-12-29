@@ -29,7 +29,7 @@ SimulationState::SimulationState(StateStack & stack, Context context)
 
     BodiesArray bodies;
     deserializeBodies(std::ifstream{ getContext().selectedSystem->c_str() }, bodies);
-    *getContext().system = System{ bodies, PhysicsEngine{} };
+    *getContext().system = System{ bodies };
 
     initCamera(bodies);
     loadSimulationControls();
@@ -248,7 +248,7 @@ void SimulationState::resetSystem()
 {
     BodiesArray bodies;
     deserializeBodies(std::ifstream{ *getContext().selectedSystem }, bodies);
-    *getContext().system = System{ bodies, PhysicsEngine{} };
+    *getContext().system = System{ bodies };
 
     setNormalMode();
 
@@ -262,16 +262,13 @@ void SimulationState::resetSystem()
 void SimulationState::initCamera(const BodiesArray& bodies)
 {
     scalar totalMass = {};
-    for (const Body& body : bodies)
-    {
-        totalMass += body.mass();
-    }
-
     glm::vec3 averagePosition;
     for (const Body& body : bodies)
     {
-        averagePosition += (body.mass() / totalMass) * body.position();
+        totalMass += body.mass();
+        averagePosition += body.mass() * body.position();
     }
+    averagePosition /= totalMass;
 
     scalar farthestBodyDistance = std::numeric_limits<scalar>::lowest();
     for (const Body& body : bodies)

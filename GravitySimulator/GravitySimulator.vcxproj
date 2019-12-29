@@ -159,9 +159,9 @@
     <ClCompile Include="Engine\Display\MeshGeneration.cpp" />
     <ClCompile Include="Engine\Display\Shader.cpp" />
     <ClCompile Include="Engine\Display\Texture.cpp" />
+    <ClCompile Include="Engine\Physics\BarnesHut.cpp" />
     <ClCompile Include="Engine\Physics\BodiesArray.cpp" />
     <ClCompile Include="Engine\Physics\Body.cpp" />
-    <ClCompile Include="Engine\Physics\PhysicsEngine.cpp" />
     <ClCompile Include="Engine\Physics\PhysicsType.cpp" />
     <ClCompile Include="Engine\Physics\Serializer.cpp" />
     <ClCompile Include="Engine\Physics\System.cpp" />
@@ -184,9 +184,9 @@
     <ClInclude Include="Engine\Display\Shader.h" />
     <ClInclude Include="Engine\Display\stb_image.h" />
     <ClInclude Include="Engine\Display\Texture.h" />
+    <ClInclude Include="Engine\Physics\BarnesHut.h" />
     <ClInclude Include="Engine\Physics\BodiesArray.h" />
     <ClInclude Include="Engine\Physics\Body.h" />
-    <ClInclude Include="Engine\Physics\PhysicsEngine.h" />
     <ClInclude Include="Engine\Physics\PhysicsType.h" />
     <ClInclude Include="Engine\Physics\Serializer.h" />
     <ClInclude Include="Engine\Physics\System.h" />

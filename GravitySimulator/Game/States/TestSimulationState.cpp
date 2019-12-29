@@ -21,7 +21,7 @@ TestSimulationState::TestSimulationState(StateStack & stack, Context context)
 
     BodiesArray bodies;
     deserializeBodies(std::ifstream{ "Systems/Random.txt" }, bodies);
-    *getContext().system = System{ bodies, PhysicsEngine{} };
+    *getContext().system = System{ bodies };
 
     initCamera(bodies);
     loadSimulationControls();
@@ -108,16 +108,13 @@ void TestSimulationState::drawBodies()
 void TestSimulationState::initCamera(const BodiesArray& bodies)
 {
     scalar totalMass = {};
-    for (const Body& body : bodies)
-    {
-        totalMass += body.mass();
-    }
-
     glm::vec3 averagePosition;
     for (const Body& body : bodies)
     {
-        averagePosition += (body.mass() / totalMass) * body.position();
+        totalMass += body.mass();
+        averagePosition += body.mass() * body.position();
     }
+    averagePosition /= totalMass;
 
     scalar farthestBodyDistance = std::numeric_limits<scalar>::lowest();
     for (const Body& body : bodies)

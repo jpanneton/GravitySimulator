@@ -1,9 +1,5 @@
 #include "Body.h"
-
 #include <cmath>
-
-const scalar Body::MassMin = 1.0f;
-const scalar Body::VelocityMin = 0.0f;
 
 Body::Body(const vec3& position, const vec3& velocity, scalar mass, Material material)
     : m_position{ position }
@@ -53,9 +49,14 @@ void Body::move(scalar dt)
     m_position += dt * m_velocity;
 }
 
-void Body::accelerate(const vec3 & dv, scalar dt)
+void Body::accelerate(const vec3& dv, scalar dt)
 {
     m_velocity += dt * dv;
+}
+
+bool Body::collidesWith(const Body& other) const
+{
+    return glm::length(position() - other.position()) <= radius() + other.radius();
 }
 
 scalar Body::radiusFromMass(scalar mass)

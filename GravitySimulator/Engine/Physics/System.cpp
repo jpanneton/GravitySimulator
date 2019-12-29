@@ -1,15 +1,29 @@
 #include "System.h"
 #include <iterator>
 #include <algorithm>
+#include <glm/gtx/component_wise.hpp>
 
-System::System(const PhysicsEngine& engine)
-    : System{ {}, engine }
+namespace
+{
+    template<typename T, class Func>
+    inline T roundToPowerOfTwo(T value, Func roundingFunction)
+    {
+        const T sign = value < T(0) ? T(-1) : T(1);
+        value = std::abs(value);
+        return sign * (value > T(2) ?
+            std::exp2(roundingFunction(std::log2(value))) :
+            roundingFunction(value));
+    }
+}
+
+System::System(scalar gravityFactor)
+    : System{ {}, gravityFactor }
 {
 }
 
-System::System(const BodiesArray& bodies, const PhysicsEngine& engine, scalar timescale)
+System::System(const BodiesArray& bodies, scalar gravityFactor, scalar timescale)
     : m_bodies{ bodies }
-    , m_physicsEngine{ engine }
+    , m_gravityFactor{ gravityFactor }
     , m_timescale{ timescale }
     , m_timestep{ 0.1f } 
     , m_collisions{}
@@ -18,7 +32,7 @@ System::System(const BodiesArray& bodies, const PhysicsEngine& engine, scalar ti
 }
 
 System::System(const System & other)
-    : System{ other.m_bodies, other.m_physicsEngine, other.m_timescale }
+    : System{ other.m_bodies, other.m_gravityFactor, other.m_timescale }
 {
 }
 
@@ -41,7 +55,7 @@ void System::update(sf::Time dt)
     resolveCollisions();
 }
 
-void System::addBody(const Body & body)
+void System::addBody(const Body& body)
 {
     m_bodies.push_back(body);
 }
@@ -70,17 +84,46 @@ void System::save(std::ostream& os)
 
 void System::applyGravity(float timespan)
 {
-    auto& engine = m_physicsEngine;
-    for_each_distinct_pair(begin(), end(), [&engine, timespan](Body& first, Body& second) {
-        engine.applyGravity(first, second, timespan);
-    });
+    // Calculate world bounds
+    glm::vec3 minWorldPoint(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    glm::vec3 maxWorldPoint(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+
+    for (Body& body : m_bodies)
+    {
+        const glm::vec3& bodyPosition = body.position();
+        if (bodyPosition.x < minWorldPoint.x) minWorldPoint.x = bodyPosition.x;
+        if (bodyPosition.x > maxWorldPoint.x) maxWorldPoint.x = bodyPosition.x;
+        if (bodyPosition.y < minWorldPoint.y) minWorldPoint.y = bodyPosition.y;
+        if (bodyPosition.y > maxWorldPoint.y) maxWorldPoint.y = bodyPosition.y;
+        if (bodyPosition.z < minWorldPoint.z) minWorldPoint.z = bodyPosition.z;
+        if (bodyPosition.z > maxWorldPoint.z) maxWorldPoint.z = bodyPosition.z;
+    }
+
+    const glm::vec3 worldRadius = 0.5f * (maxWorldPoint - minWorldPoint);
+    const glm::vec3 worldCenter = minWorldPoint + worldRadius;
+
+    // Round world center coordinates to closest powers of 2
+    const glm::vec3 newWorldCenter = { roundToPowerOfTwo(worldCenter.x, std::roundf), roundToPowerOfTwo(worldCenter.y, std::roundf), roundToPowerOfTwo(worldCenter.z, std::roundf) };
+    // Ceil world radius to closest power of 2 while taking into account the new center offset
+    const float newWorldRadius = roundToPowerOfTwo(glm::compMax(worldRadius + glm::abs(newWorldCenter - worldCenter)), std::ceilf);
+
+    // Run Barnes-Hut simulation (n log n)
+    // Since bounds are powers of 2, floating-point errors are avoided when dividing the space
+    BarnesHutOctree octree({ newWorldCenter, newWorldRadius });
+    octree.buildTree(m_bodies);
+
+    for (Body& body : m_bodies)
+    {
+        body.accelerate(octree.calculateForce(body, m_gravityFactor), timespan);
+    }
 }
 
 void System::moveAllBodies(float timespan)
 {
-    std::for_each(begin(), end(), [timespan](Body& body) {
+    for (Body& body : m_bodies)
+    {
         body.move(timespan);
-    });
+    }
 }
 
 void System::detectCollisions()
@@ -91,7 +134,7 @@ void System::detectCollisions()
     {
         for (auto second = std::next(first); second != end(); ++second)
         {
-            if (m_physicsEngine.detectCollision(*first, *second))
+            if (first->collidesWith(*second))
             {
                 m_collisions.push_back({ first, second });
             }
