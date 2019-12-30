@@ -156,6 +156,9 @@
     <ClInclude Include="Engine\Physics\BarnesHut.h">
       <Filter>Engine\Physics</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Core\FreeList.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Core\ResourceHolder.inl">

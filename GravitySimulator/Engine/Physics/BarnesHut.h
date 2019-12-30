@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BodiesArray.h"
+#include "Engine/Core/FreeList.h"
 #include <glm/glm.hpp>
 #include <array>
 #include <memory>
@@ -8,37 +9,63 @@
 
 class BarnesHutOctree
 {
+    static constexpr int32_t DIM = 1 << 3; // 3D = 8 octants
+
 public:
-    class BoundingBox
+    struct BoundingBox
     {
-    public:
-        BoundingBox(const glm::vec3& center, float radius);
-        const glm::vec3& getCenter() const;
-        float getRadius() const;
         bool contains(const glm::vec3& point) const;
 
-    private:
-        glm::vec3 m_center;
-        float m_radius;
+        glm::vec3 center;
+        float radius = {};
     };
 
-    class BarnesHutBody
+    struct OctreeElement
     {
-    public:
-        using Ptr = std::unique_ptr<BarnesHutBody>;
+        glm::vec3 position;
+        float mass = {};
+    };
 
-        BarnesHutBody(const glm::vec3& position, float mass);
-        const glm::vec3& getPosition() const;
-        float getMass() const;
+    struct OctreeNode
+    {
+        // If this node is a branch, stores the index of its first child
+        // If this node is a leaf and contains a body, stores -1
+        // If this node is a leaf and is empty, stores -2
+        int32_t firstChild = -2;
 
-    private:
-        glm::vec3 m_position;
-        float m_mass;
+        // Data of the node
+        OctreeElement data;
+        BoundingBox box;
+
+        bool isLeafNode() const noexcept
+        {
+            return firstChild < 0;
+        }
+
+        bool isEmptyLeafNode() const noexcept
+        {
+            return isLeafNode() && firstChild == -2;
+        }
+    };
+
+    struct OctreeNodeGroup
+    {
+        OctreeNodeGroup() = default;
+        OctreeNodeGroup(const BoundingBox& parentBox)
+        {
+            for (int32_t i = 0; i < DIM; ++i)
+            {
+                octants[i].box = getChildBoxFromOctant(parentBox, i);
+            }
+        }
+
+        std::array<OctreeNode, DIM> octants;
     };
 
     using Ptr = std::unique_ptr<BarnesHutOctree>;
 
-    BarnesHutOctree(const BoundingBox& box);
+    BarnesHutOctree() = default;
+    void reserve(size_t capacity);
 
 private:
     // Determines which region of the tree would contain the point
@@ -48,19 +75,19 @@ private:
     // x:      - - - - + + + +
     // y:      - - + + - - + +
     // z:      - + - + - + - +
-    int getOctantContainingPoint(const glm::vec3& point) const;
-    BoundingBox getChildBoxFromRegion(int32_t regionIndex);
+    static int getOctantContainingPoint(const BoundingBox& box, const glm::vec3& point);
+    static BoundingBox getChildBoxFromOctant(const BoundingBox& parentBox, int32_t regionIndex);
 
-    bool isLeafNode() const;
-    void insert(const BarnesHutBody& body);
-    void updateTree(); // Updates the center of mass of parent nodes from child nodes
+    void updateWorldBounds(const BodiesArray& bodies);
+    void insert(OctreeNode& currentNode, const OctreeElement& element);
+    void updateTree(OctreeNode& currentNode); // Updates the center of mass of parent nodes from child nodes
+    glm::vec3 calculateForce(OctreeNode& currentNode, const Body& body, scalar gravityFactor);
 
 public:
     void buildTree(const BodiesArray& bodies);
     glm::vec3 calculateForce(const Body& body, scalar gravityFactor);
     
 private:
-    BoundingBox m_box; // Bounding box of the node
-    std::array<Ptr, 8> m_children; // Octants of the node
-    std::optional<BarnesHutBody> m_data; // Data of the node
+    OctreeNode m_root; // Root node
+    FreeList<OctreeNodeGroup> m_nodes; // Other nodes
 };

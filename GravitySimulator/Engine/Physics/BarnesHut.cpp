@@ -1,7 +1,18 @@
 #include "BarnesHut.h"
+#include <glm/gtx/component_wise.hpp>
 
 namespace
 {
+    template<typename T, class Func>
+    inline T roundToPowerOfTwo(T value, Func roundingFunction)
+    {
+        const T sign = value < T(0) ? T(-1) : T(1);
+        value = std::abs(value);
+        return sign * (value > T(2) ?
+            std::exp2(roundingFunction(std::log2(value))) :
+            roundingFunction(value));
+    }
+
     template<typename T>
     constexpr T calculateGravitationalForce(T gravityFactor, T mass, T distanceSquared)
     {
@@ -10,174 +21,162 @@ namespace
     }
 }
 
-BarnesHutOctree::BoundingBox::BoundingBox(const glm::vec3& center, float radius)
-    : m_center(center)
-    , m_radius(radius)
-{
-}
-
-const glm::vec3& BarnesHutOctree::BoundingBox::getCenter() const
-{
-    return m_center;
-}
-
-float BarnesHutOctree::BoundingBox::getRadius() const
-{
-    return m_radius;
-}
-
 bool BarnesHutOctree::BoundingBox::contains(const glm::vec3& point) const
 {
-    const glm::vec3 delta = glm::abs(point - m_center);
-    return m_radius >= delta.x && m_radius >= delta.y && m_radius >= delta.z;
+    const glm::vec3 delta = glm::abs(point - center);
+    return radius >= delta.x && radius >= delta.y && radius >= delta.z;
 }
 
 //------------------------------------------------------------------------
 
-BarnesHutOctree::BarnesHutBody::BarnesHutBody(const glm::vec3& position, float mass)
-    : m_position(position)
-    , m_mass(mass)
+void BarnesHutOctree::reserve(size_t capacity)
 {
+    const size_t minTreeHeight = static_cast<size_t>(std::ceil(std::log(capacity) / std::log(DIM)));
+    // Finite geometric series
+    const size_t maxNodeCount = static_cast<size_t>(std::ceil((std::pow(DIM, minTreeHeight + 1) - 1) / float(DIM - 1)));
+    // Remove the root from the count (-1)
+    m_nodes.reserve(maxNodeCount - 1);
 }
 
-const glm::vec3& BarnesHutOctree::BarnesHutBody::getPosition() const
-{
-    return m_position;
-}
-
-float BarnesHutOctree::BarnesHutBody::getMass() const
-{
-    return m_mass;
-}
-
-//------------------------------------------------------------------------
-
-BarnesHutOctree::BarnesHutOctree(const BoundingBox& box)
-    : m_box(box)
-{
-}
-
-int BarnesHutOctree::getOctantContainingPoint(const glm::vec3& point) const
+int BarnesHutOctree::getOctantContainingPoint(const BoundingBox& box, const glm::vec3& point)
 {
     int code = 0;
-    if (point.x >= m_box.getCenter().x) code |= 0b0100;
-    if (point.y >= m_box.getCenter().y) code |= 0b0010;
-    if (point.z >= m_box.getCenter().z) code |= 0b0001;
+    if (point.x >= box.center.x) code |= 0b0100;
+    if (point.y >= box.center.y) code |= 0b0010;
+    if (point.z >= box.center.z) code |= 0b0001;
     return code;
 }
 
-BarnesHutOctree::BoundingBox BarnesHutOctree::getChildBoxFromRegion(int32_t regionIndex)
+BarnesHutOctree::BoundingBox BarnesHutOctree::getChildBoxFromOctant(const BoundingBox& parentBox, int32_t regionIndex)
 {
-    glm::vec3 newOrigin = m_box.getCenter();
-    newOrigin.x += (regionIndex & 0b0100 ? 0.5f : -0.5f) * m_box.getRadius();
-    newOrigin.y += (regionIndex & 0b0010 ? 0.5f : -0.5f) * m_box.getRadius();
-    newOrigin.z += (regionIndex & 0b0001 ? 0.5f : -0.5f) * m_box.getRadius();
-    return { newOrigin, 0.5f * m_box.getRadius() };
+    glm::vec3 newOrigin = parentBox.center;
+    newOrigin.x += (regionIndex & 0b0100 ? 0.5f : -0.5f) * parentBox.radius;
+    newOrigin.y += (regionIndex & 0b0010 ? 0.5f : -0.5f) * parentBox.radius;
+    newOrigin.z += (regionIndex & 0b0001 ? 0.5f : -0.5f) * parentBox.radius ;
+    return { newOrigin, 0.5f * parentBox.radius };
 }
 
-bool BarnesHutOctree::isLeafNode() const
+void BarnesHutOctree::updateWorldBounds(const BodiesArray& bodies)
 {
-    return m_children[0] == nullptr;
+    // Calculate world bounds
+    glm::vec3 minWorldPoint(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    glm::vec3 maxWorldPoint(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+
+    for (const Body& body : bodies)
+    {
+        const glm::vec3& bodyPosition = body.position();
+        if (bodyPosition.x < minWorldPoint.x) minWorldPoint.x = bodyPosition.x;
+        if (bodyPosition.x > maxWorldPoint.x) maxWorldPoint.x = bodyPosition.x;
+        if (bodyPosition.y < minWorldPoint.y) minWorldPoint.y = bodyPosition.y;
+        if (bodyPosition.y > maxWorldPoint.y) maxWorldPoint.y = bodyPosition.y;
+        if (bodyPosition.z < minWorldPoint.z) minWorldPoint.z = bodyPosition.z;
+        if (bodyPosition.z > maxWorldPoint.z) maxWorldPoint.z = bodyPosition.z;
+    }
+
+    const glm::vec3 worldRadius = 0.5f * (maxWorldPoint - minWorldPoint);
+    const glm::vec3 worldCenter = minWorldPoint + worldRadius;
+
+    // Round world center coordinates to closest powers of 2
+    const glm::vec3 newWorldCenter = { roundToPowerOfTwo(worldCenter.x, std::roundf), roundToPowerOfTwo(worldCenter.y, std::roundf), roundToPowerOfTwo(worldCenter.z, std::roundf) };
+    // Ceil world radius to closest power of 2 while taking into account the new center offset
+    const float newWorldRadius = roundToPowerOfTwo(glm::compMax(worldRadius + glm::abs(newWorldCenter - worldCenter)), std::ceilf);
+    // Since bounds are powers of 2, floating-point errors are avoided when dividing the space
+    m_root.box = { newWorldCenter, newWorldRadius };
 }
 
-void BarnesHutOctree::insert(const BarnesHutBody& body)
+void BarnesHutOctree::insert(OctreeNode& currentNode, const OctreeElement& element)
 {
-    assert(m_box.contains(body.getPosition()));
+    assert(currentNode.box.contains(element.position));
 
-    if (isLeafNode())
+    if (currentNode.isLeafNode())
     {
         // Empty leaf
-        if (!m_data)
+        if (currentNode.isEmptyLeafNode())
         {
-            m_data = body;
+            currentNode.firstChild = -1;
+            currentNode.data = element;
         }
         // Occupied leaf (needs to be split up)
         else
         {
-            // Save for later re-insertion
-            const auto oldBody = *m_data;
-            m_data = {};
+            // Save current node data for later re-insertion
+            const auto oldElement = currentNode.data;
 
-            // Split the current node
-            for (int32_t i = 0; i < m_children.size(); ++i)
-            {
-                // Compute new bounding box for this child
-                m_children[i] = std::make_unique<BarnesHutOctree>(getChildBoxFromRegion(i));
-            }
-
-            // Re-insert the old body and insert the new one
-            const int oldPointOctant = getOctantContainingPoint(oldBody.getPosition());
-            const int newPointOctant = getOctantContainingPoint(body.getPosition());
-            m_children[oldPointOctant]->insert(oldBody);
-            m_children[newPointOctant]->insert(body);
+            // No need to reinitialize the data since we update parents later (in updateTree)
+            // currentNode.data = {};
+            
+            // Memory must be properly pre-allocated
+            // Otherwise, currentNode will be invalidated if m_nodes grows!
+            assert(m_nodes.size() < m_nodes.capacity());
+            
+            // Update current node references
+            const auto newNodeIndex = m_nodes.insert({ currentNode.box });
+            currentNode.firstChild = newNodeIndex;
+            
+            const int32_t oldPointOctant = getOctantContainingPoint(currentNode.box, oldElement.position);
+            const int32_t newPointOctant = getOctantContainingPoint(currentNode.box, element.position);
+            insert(m_nodes[newNodeIndex].octants[oldPointOctant], oldElement);
+            insert(m_nodes[newNodeIndex].octants[newPointOctant], element);
         }
     }
     else
     {
         // Find leaf in which to insert the new body recursively
-        const int octant = getOctantContainingPoint(body.getPosition());
-        m_children[octant]->insert(body);
+        const int32_t octantIndex = getOctantContainingPoint(currentNode.box, element.position);
+        insert(m_nodes[currentNode.firstChild].octants[octantIndex], element);
     }
 }
 
-void BarnesHutOctree::updateTree()
+void BarnesHutOctree::updateTree(OctreeNode& currentNode)
 {
     // Data is already up-to-date
-    if (isLeafNode())
+    if (currentNode.isLeafNode())
         return;
 
     // Back propagate children first
-    for (size_t i = 0; i < m_children.size(); ++i)
+    for (int32_t i = 0; i < DIM; ++i)
     {
-        if (!m_children[i]->isLeafNode())
+        OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+        if (!childNode.isLeafNode())
         {
-            m_children[i]->updateTree();
+            updateTree(childNode);
         }
     }
 
     // Calculate total mass and weighted average center of mass
     float totalMass = {};
     glm::vec3 averageCenter;
-    for (size_t i = 0; i < m_children.size(); ++i)
+    for (int32_t i = 0; i < DIM; ++i)
     {
-        if (m_children[i]->m_data)
+        OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+        if (!childNode.isEmptyLeafNode())
         {
-            totalMass += m_children[i]->m_data->getMass();
-            averageCenter += m_children[i]->m_data->getMass() * m_children[i]->m_data->getPosition();
+            totalMass += childNode.data.mass;
+            averageCenter += childNode.data.mass * childNode.data.position;
         }
     }
     averageCenter /= totalMass;
 
-    m_data = { averageCenter, totalMass };
+    currentNode.data = { averageCenter, totalMass };
 }
 
-void BarnesHutOctree::buildTree(const BodiesArray& bodies)
+glm::vec3 BarnesHutOctree::calculateForce(OctreeNode& currentNode, const Body& body, scalar gravityFactor)
 {
-    for (const Body& body : bodies)
-    {
-        insert({ body.position(), body.mass() });
-    }
-    updateTree();
-}
-
-glm::vec3 BarnesHutOctree::calculateForce(const Body& body, scalar gravityFactor)
-{
-    if (!m_data)
-    {
-        assert(isLeafNode());
+    if (currentNode.isEmptyLeafNode())
         return {};
-    }
 
-    const glm::vec3 gravityVector = m_data->getPosition() - body.position();
+    assert(currentNode.isLeafNode() || currentNode.firstChild != -2);
+
+    const glm::vec3 gravityVector = currentNode.data.position - body.position();
     const float centerOfMassDistance = glm::length(gravityVector);
 
-    if (isLeafNode())
+    if (currentNode.isLeafNode())
     {
         // If the current node is the body for which we are calculating force (itself)
         if (centerOfMassDistance == 0.0f)
             return {};
 
-        const float gravitationalForce = calculateGravitationalForce(gravityFactor, m_data->getMass(), centerOfMassDistance * centerOfMassDistance);
+        const float gravitationalForce = calculateGravitationalForce(gravityFactor, currentNode.data.mass, centerOfMassDistance * centerOfMassDistance);
         return gravitationalForce * glm::normalize(gravityVector);
     }
     else
@@ -185,20 +184,46 @@ glm::vec3 BarnesHutOctree::calculateForce(const Body& body, scalar gravityFactor
         constexpr float theta = 1.0f; // Approximation level (0 = no approximation)
         static_assert(theta >= 0.0f && theta <= 2.0f);
 
-        float octantSize = 2 * m_box.getRadius();
+        float octantSize = 2 * currentNode.box.radius;
         if (octantSize / centerOfMassDistance < theta)
         {
-            const float gravitationalForce = calculateGravitationalForce(gravityFactor, m_data->getMass(), centerOfMassDistance * centerOfMassDistance);
+            const float gravitationalForce = calculateGravitationalForce(gravityFactor, currentNode.data.mass, centerOfMassDistance * centerOfMassDistance);
             return gravitationalForce * glm::normalize(gravityVector);
         }
         else
         {
             glm::vec3 force;
-            for (size_t i = 0; i < m_children.size(); ++i)
+            for (int32_t i = 0; i < DIM; ++i)
             {
-                force += m_children[i]->calculateForce(body, gravityFactor);
+                OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+                force += calculateForce(childNode, body, gravityFactor);
             }
             return force;
         }
     }
+}
+
+void BarnesHutOctree::buildTree(const BodiesArray& bodies)
+{
+    // Reset tree
+    m_root = {};
+    m_nodes.clear();
+
+    // Update world bounds from data
+    updateWorldBounds(bodies);
+
+    // Pre-allocate memory and insert data
+    reserve(bodies.size());
+    for (const Body& body : bodies)
+    {
+        insert(m_root, { body.position(), body.mass() });
+    }
+
+    // Update total mass and average position of parents
+    updateTree(m_root);
+}
+
+glm::vec3 BarnesHutOctree::calculateForce(const Body& body, scalar gravityFactor)
+{
+    return calculateForce(m_root, body, gravityFactor);
 }

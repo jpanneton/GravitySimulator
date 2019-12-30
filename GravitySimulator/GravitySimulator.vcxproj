@@ -176,6 +176,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Core\FreeList.h" />
     <ClInclude Include="Engine\Core\ResourceHolder.h" />
     <ClInclude Include="Engine\Display\Camera.h" />
     <ClInclude Include="Engine\Display\Entity.h" />
