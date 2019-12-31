@@ -20,6 +20,9 @@ public:
     void merge(iterator target, iterator source);
     size_t size() const;
 
+    Body& operator[](int32_t n);
+    const Body& operator[](int32_t n) const;
+
     iterator begin();
     iterator end();
     const_iterator begin() const;

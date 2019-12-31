@@ -148,7 +148,7 @@ void BarnesHutOctree::updateTree(OctreeNode& currentNode)
     glm::vec3 averageCenter;
     for (int32_t i = 0; i < DIM; ++i)
     {
-        OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+        const OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
         if (!childNode.isEmptyLeafNode())
         {
             totalMass += childNode.data.mass;
@@ -157,10 +157,25 @@ void BarnesHutOctree::updateTree(OctreeNode& currentNode)
     }
     averageCenter /= totalMass;
 
-    currentNode.data = { averageCenter, totalMass };
+    // Calculate bounding radius
+    float boundingRadius = {};
+    for (int32_t i = 0; i < DIM; ++i)
+    {
+        const OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+        if (!childNode.isEmptyLeafNode())
+        {
+            const float maxChildDistance = glm::distance(averageCenter, childNode.data.position) + childNode.data.radius;
+            if (maxChildDistance > boundingRadius)
+            {
+                boundingRadius = maxChildDistance;
+            }
+        }
+    }
+
+    currentNode.data = { averageCenter, totalMass, boundingRadius };
 }
 
-glm::vec3 BarnesHutOctree::calculateForce(OctreeNode& currentNode, const Body& body, scalar gravityFactor)
+glm::vec3 BarnesHutOctree::calculateForce(const OctreeNode& currentNode, const Body& body, scalar gravityFactor) const
 {
     if (currentNode.isEmptyLeafNode())
         return {};
@@ -195,12 +210,47 @@ glm::vec3 BarnesHutOctree::calculateForce(OctreeNode& currentNode, const Body& b
             glm::vec3 force;
             for (int32_t i = 0; i < DIM; ++i)
             {
-                OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+                const OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
                 force += calculateForce(childNode, body, gravityFactor);
             }
             return force;
         }
     }
+}
+
+int32_t BarnesHutOctree::detectCollision(OctreeNode& currentNode, const Body& body, int32_t bodyIndex)
+{
+    if (!currentNode.isEmptyLeafNode())
+    {
+        // Collision test
+        if (glm::distance(body.position(), currentNode.data.position) <= body.radius() + currentNode.data.radius)
+        {
+            if (currentNode.isLeafNode())
+            {
+                // If =, the current node is the body for which we are detecting collision (itself)
+                // If <, the current node has already been checked for collisions
+                // So, to avoid duplicated entries, we doesn't consider it
+                if (currentNode.data.index <= bodyIndex)
+                    return -1;
+                const int32_t index = currentNode.data.index;
+                // Flag the current node as already colliding for future tests
+                currentNode.data.index = -1;
+                return index;
+            }
+            else
+            {
+                for (int32_t i = 0; i < DIM; ++i)
+                {
+                    OctreeNode& childNode = m_nodes[currentNode.firstChild].octants[i];
+                    const int32_t result = detectCollision(childNode, body, bodyIndex);
+                    if (result != -1)
+                        return result;
+                }
+            }
+        }
+    }
+
+    return -1;
 }
 
 void BarnesHutOctree::buildTree(const BodiesArray& bodies)
@@ -214,16 +264,22 @@ void BarnesHutOctree::buildTree(const BodiesArray& bodies)
 
     // Pre-allocate memory and insert data
     reserve(bodies.size());
-    for (const Body& body : bodies)
+    for (int32_t i = 0; i < bodies.size(); ++i)
     {
-        insert(m_root, { body.position(), body.mass() });
+        const Body& body = bodies[i];
+        insert(m_root, { body.position(), body.mass(), body.radius(), i });
     }
 
     // Update total mass and average position of parents
     updateTree(m_root);
 }
 
-glm::vec3 BarnesHutOctree::calculateForce(const Body& body, scalar gravityFactor)
+glm::vec3 BarnesHutOctree::calculateForce(const Body& body, scalar gravityFactor) const
 {
     return calculateForce(m_root, body, gravityFactor);
+}
+
+int32_t BarnesHutOctree::detectCollision(const Body& body, int32_t bodyIndex)
+{
+    return detectCollision(m_root, body, bodyIndex);
 }

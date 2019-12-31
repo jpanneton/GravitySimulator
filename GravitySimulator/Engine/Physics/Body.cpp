@@ -56,7 +56,7 @@ void Body::accelerate(const vec3& dv, scalar dt)
 
 bool Body::collidesWith(const Body& other) const
 {
-    return glm::length(position() - other.position()) <= radius() + other.radius();
+    return glm::distance(position(), other.position()) <= radius() + other.radius();
 }
 
 scalar Body::radiusFromMass(scalar mass)

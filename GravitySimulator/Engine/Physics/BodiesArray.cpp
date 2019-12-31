@@ -34,6 +34,16 @@ size_t BodiesArray::size() const
     return m_bodies.size();
 }
 
+Body& BodiesArray::operator[](int32_t n)
+{
+    return m_bodies[n];
+}
+
+const Body& BodiesArray::operator[](int32_t n) const
+{
+    return m_bodies[n];
+}
+
 BodiesArray::iterator BodiesArray::begin()
 {
     return std::begin(m_bodies);

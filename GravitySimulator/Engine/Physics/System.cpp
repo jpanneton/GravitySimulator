@@ -34,10 +34,10 @@ System::iterator System::end()
 
 void System::update(sf::Time dt)
 {
-    scalar timespan = m_timescale * dt.asSeconds();
+    const scalar timespan = m_timescale * dt.asSeconds();
     applyGravity(timespan);
-    moveAllBodies(timespan);
     detectCollisions();
+    moveAllBodies(timespan);
     resolveCollisions();
 }
 
@@ -91,14 +91,13 @@ void System::detectCollisions()
 {
     m_collisions.clear();
 
-    for (auto first = begin(); first != end(); ++first)
+    for (int32_t i = 0; i < m_bodies.size(); ++i)
     {
-        for (auto second = std::next(first); second != end(); ++second)
+        const int32_t result = m_octree.detectCollision(m_bodies[i], i);
+        if (result != -1)
         {
-            if (first->collidesWith(*second))
-            {
-                m_collisions.push_back({ first, second });
-            }
+            assert(result != i);
+            m_collisions.push_back({ i, result });
         }
     }
 }
@@ -107,6 +106,6 @@ void System::resolveCollisions()
 {
     for (auto collision : m_collisions)
     {
-        m_bodies.merge(collision.first, collision.second);
+        m_bodies.merge(begin() + collision.first, begin() + collision.second);
     }
 }

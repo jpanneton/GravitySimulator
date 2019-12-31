@@ -10,9 +10,7 @@ class System
 {
 public:
     using iterator = BodiesArray::iterator;
-    using collision = std::pair<iterator, iterator>;
 
-public:
     System() = default;
     System(scalar gravityFactor);
     System(const BodiesArray& bodies, scalar gravityFactor = 1.0f, scalar timescale = 1.0f);
@@ -42,6 +40,6 @@ private:
     scalar m_gravityFactor = {};
     scalar m_timescale = {};
     scalar m_timestep = {};
-
-    std::vector<collision> m_collisions;
+    
+    BarnesHutOctree::CollisionContainer m_collisions;
 };

@@ -12,6 +12,9 @@ class BarnesHutOctree
     static constexpr int32_t DIM = 1 << 3; // 3D = 8 octants
 
 public:
+    using Collision = std::pair<int32_t, int32_t>;
+    using CollisionContainer = std::vector<Collision>;
+
     struct BoundingBox
     {
         bool contains(const glm::vec3& point) const;
@@ -22,10 +25,15 @@ public:
 
     struct OctreeElement
     {
+        // Gravity simulation
         glm::vec3 position;
         float mass = {};
-    };
 
+        // Collision detection
+        float radius = {}; // Bounding sphere radius of children or the body itself
+        int32_t index = -1; // Index of the body in the original body array
+    };
+    
     struct OctreeNode
     {
         // If this node is a branch, stores the index of its first child
@@ -81,11 +89,15 @@ private:
     void updateWorldBounds(const BodiesArray& bodies);
     void insert(OctreeNode& currentNode, const OctreeElement& element);
     void updateTree(OctreeNode& currentNode); // Updates the center of mass of parent nodes from child nodes
-    glm::vec3 calculateForce(OctreeNode& currentNode, const Body& body, scalar gravityFactor);
+    glm::vec3 calculateForce(const OctreeNode& currentNode, const Body& body, scalar gravityFactor) const;
+    int32_t detectCollision(OctreeNode& currentNode, const Body& body, int32_t bodyIndex);
 
 public:
     void buildTree(const BodiesArray& bodies);
-    glm::vec3 calculateForce(const Body& body, scalar gravityFactor);
+    glm::vec3 calculateForce(const Body& body, scalar gravityFactor) const;
+    // Returns only the first collision encountered (a body can only collide with another one each update)
+    // Since the system is being updated frequently, multi-collisions are handled over multiple updates
+    int32_t detectCollision(const Body& body, int32_t bodyIndex);
     
 private:
     OctreeNode m_root; // Root node
