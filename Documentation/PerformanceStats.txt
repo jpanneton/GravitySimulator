@@ -1,0 +1,39 @@
+Test 1: different octrees
+
+Physics iteration without collision detection (1000 bodies):
+Brute force: 9-10 ms
+Octree with ptr: 8-9 ms
+Octree with optional: 7-8 ms, with exact AABB: 5 ms
+Octree with optional and cached AABBs: 5 ms
+FlatOctree with cached AABBs: 3 ms
+
+Physics iteration without collision detection (2000 bodies):
+Brute force: 40 ms
+Octree with ptr: 17 ms
+Octree with optional: 16 ms
+Octree with optional and cached AABBs: 12 ms
+FlatOctree with cached AABBs: 7 m
+
+
+Test 2: specific steps
+
+Octree building (1000 bodies): 0 ms
+Octree building (2000 bodies): 0 ms
+Octree building (10000 bodies): 3 ms
+
+Force calculation (1000 bodies): 3-4 ms
+Force calculation (2000 bodies): 6-8 ms
+Force calculation (10000 bodies): 35-45 ms
+
+Collision detection without optimization (1000 bodies): 4 ms
+Collision detection without optimization (2000 bodies): 16 ms
+Collision detection with optimization (1000 bodies): 1-2 ms
+Collision detection with optimization (2000 bodies): 3-4 ms
+Collision detection with optimization (10000 bodies): 20-25 ms
+
+Total without multithreading (1000 bodies): 4-5 ms
+Total without multithreading (2000 bodies): 10-11 ms
+Total without multithreading (10000 bodies): 55-65 ms
+Total with multithreading (1000 bodies): 3-4 ms
+Total with multithreading (2000 bodies): 7-8 ms
+Total with multithreading (10000 bodies): 35-45 ms

@@ -165,6 +165,9 @@
     <ClInclude Include="Engine\Core\ThreadPool.h">
       <Filter>Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Core\Time.h">
+      <Filter>Engine\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Core\ResourceHolder.inl">

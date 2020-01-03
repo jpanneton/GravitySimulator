@@ -180,6 +180,7 @@
     <ClInclude Include="Engine\Core\FreeList.h" />
     <ClInclude Include="Engine\Core\ResourceHolder.h" />
     <ClInclude Include="Engine\Core\ThreadPool.h" />
+    <ClInclude Include="Engine\Core\Time.h" />
     <ClInclude Include="Engine\Display\Camera.h" />
     <ClInclude Include="Engine\Display\Entity.h" />
     <ClInclude Include="Engine\Display\Mesh.h" />
