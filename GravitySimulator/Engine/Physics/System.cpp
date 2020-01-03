@@ -1,6 +1,12 @@
 #include "System.h"
+#include "Engine/Core/ThreadPool.h"
 #include <iterator>
 #include <algorithm>
+
+namespace
+{
+    ThreadPool pool(2); // Two workers : one for force calculation and one for collision detection
+}
 
 System::System(scalar gravityFactor)
     : System{ {}, gravityFactor }
@@ -11,13 +17,12 @@ System::System(const BodiesArray& bodies, scalar gravityFactor, scalar timescale
     : m_bodies{ bodies }
     , m_gravityFactor{ gravityFactor }
     , m_timescale{ timescale }
-    , m_timestep{ 0.1f } 
-    , m_collisions{}
+    , m_timestep{ 0.1f }
 {
     m_collisions.reserve(BodiesArray::MAX_BODIES * 2);
 }
 
-System::System(const System & other)
+System::System(const System& other)
     : System{ other.m_bodies, other.m_gravityFactor, other.m_timescale }
 {
 }
@@ -35,8 +40,14 @@ System::iterator System::end()
 void System::update(sf::Time dt)
 {
     const scalar timespan = m_timescale * dt.asSeconds();
-    applyGravity(timespan);
-    detectCollisions();
+
+    // Run Barnes-Hut simulation (n log n)
+    m_octree.buildTree(m_bodies);
+
+    pool.enqueue([&] { applyGravity(timespan); });
+    pool.enqueue([&] { detectCollisions(); });
+    pool.waitFinished();
+
     moveAllBodies(timespan);
     resolveCollisions();
 }
@@ -70,11 +81,10 @@ void System::save(std::ostream& os)
 
 void System::applyGravity(float timespan)
 {
-    // Run Barnes-Hut simulation (n log n)
-    m_octree.buildTree(m_bodies);
-
-    for (Body& body : m_bodies)
+    // Reversed loop to avoid false sharing with collision detection thread
+    for (size_t i = m_bodies.size(); i-- > 0;)
     {
+        Body& body = m_bodies[static_cast<int32_t>(i)];
         body.accelerate(m_octree.calculateForce(body, m_gravityFactor), timespan);
     }
 }

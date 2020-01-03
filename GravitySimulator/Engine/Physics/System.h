@@ -37,6 +37,7 @@ private:
 private:
     BodiesArray m_bodies;
     BarnesHutOctree m_octree;
+
     scalar m_gravityFactor = {};
     scalar m_timescale = {};
     scalar m_timestep = {};

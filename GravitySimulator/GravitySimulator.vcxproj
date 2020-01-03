@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Core\ThreadPool.cpp" />
     <ClCompile Include="Engine\Display\Camera.cpp" />
     <ClCompile Include="Engine\Display\Entity.cpp" />
     <ClCompile Include="Engine\Display\Mesh.cpp" />
@@ -178,6 +179,7 @@
   <ItemGroup>
     <ClInclude Include="Engine\Core\FreeList.h" />
     <ClInclude Include="Engine\Core\ResourceHolder.h" />
+    <ClInclude Include="Engine\Core\ThreadPool.h" />
     <ClInclude Include="Engine\Display\Camera.h" />
     <ClInclude Include="Engine\Display\Entity.h" />
     <ClInclude Include="Engine\Display\Mesh.h" />
