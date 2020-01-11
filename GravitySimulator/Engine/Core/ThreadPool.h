@@ -1,3 +1,5 @@
+#pragma once
+
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -18,6 +20,19 @@ public:
     }
 
     void waitFinished();
+
+    // Utility function to get an index range on a dataset according to a certain batch size and index
+    template<typename IndexType>
+    static constexpr auto getRangeFromBatch(size_t totalSize, size_t batchCount, IndexType batchIndex)
+    {
+        auto batchSize = totalSize / batchCount;
+        if (batchIndex < totalSize % batchCount)
+            ++batchSize;
+        return std::make_pair(
+            static_cast<IndexType>(batchIndex * batchSize),
+            static_cast<IndexType>((batchIndex + 1) * batchSize)
+        );
+    }
 
 private:
     void threadProc();

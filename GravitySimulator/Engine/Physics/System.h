@@ -4,7 +4,6 @@
 #include "BodiesArray.h"
 #include "Serializer.h"
 #include <SFML/System/Time.hpp>
-#include <vector>
 
 class System
 {
@@ -29,18 +28,18 @@ public:
     void save(std::ostream& os);
 
 private:
-    void applyGravity(float timespan);
+    void applyGravity(unsigned int batchIndex, float timespan);
     void moveAllBodies(float timespan);
-    void detectCollisions();
+    void detectCollisions(unsigned int batchIndex);
     void resolveCollisions();
 
 private:
     BodiesArray m_bodies;
     BarnesHutOctree m_octree;
+    // Each thread has its own collision container
+    std::vector<BarnesHutOctree::CollisionContainer> m_collisionBatches;
 
     scalar m_gravityFactor = {};
     scalar m_timescale = {};
     scalar m_timestep = {};
-    
-    BarnesHutOctree::CollisionContainer m_collisions;
 };

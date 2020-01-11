@@ -1,21 +1,17 @@
 #include "Body.h"
-#include <cmath>
+#include <algorithm>
 
 Body::Body(const vec3& position, const vec3& velocity, scalar mass, Material material)
     : m_position{ position }
     , m_velocity{ velocity }
-    , m_mass{ mass }
+    , m_mass{ std::max(MassMin, mass) }
     , m_radius{ radiusFromMass(mass) }
     , m_material { material }
 {
 }
 
-Body::Body(const Body & other)
-    : m_position{ other.m_position }
-    , m_velocity{ other.m_velocity }
-    , m_mass{ other.m_mass }
-    , m_radius{ other.m_radius }
-    , m_material { other.m_material }
+Body::Body(const Body& other)
+    : Body(other.m_position, other.m_velocity, other.m_mass, other.m_material)
 {
 }
 
@@ -57,6 +53,16 @@ void Body::accelerate(const vec3& dv, scalar dt)
 bool Body::collidesWith(const Body& other) const
 {
     return glm::distance(position(), other.position()) <= radius() + other.radius();
+}
+
+void Body::kill()
+{
+    m_mass = 0.0f;
+}
+
+bool Body::isDead() const
+{
+    return m_mass == 0.0f;
 }
 
 scalar Body::radiusFromMass(scalar mass)

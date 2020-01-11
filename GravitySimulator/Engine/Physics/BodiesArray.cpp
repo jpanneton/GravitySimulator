@@ -23,10 +23,27 @@ void BodiesArray::merge(iterator target, iterator source)
     vec3 newVelocity = t * target->velocity() + s * source->velocity();
     Material newMaterial = t > s ? target->material() : source->material();
 
-    *target = Body{ newPosition, newVelocity, totalMass, newMaterial }; 
+    *target = Body{ newPosition, newVelocity, totalMass, newMaterial };
+    source->kill();
+}
 
-    std::swap(*source, m_bodies.back());
-    m_bodies.pop_back();
+void BodiesArray::removeDeadBodies()
+{
+    while (m_bodies.back().isDead())
+        m_bodies.pop_back();
+
+    for (int32_t i = 0; i < m_bodies.size(); ++i)
+    {
+        if (m_bodies[i].isDead())
+        {
+            assert(!m_bodies.back().isDead());
+            m_bodies[i] = m_bodies.back();
+            m_bodies.pop_back();
+        }
+
+        while (m_bodies.back().isDead())
+            m_bodies.pop_back();
+    }
 }
 
 size_t BodiesArray::size() const

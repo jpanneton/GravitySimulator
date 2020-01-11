@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BodiesArray.h"
+#include "Engine/Core/CopyableAtomic.h"
 #include "Engine/Core/FreeList.h"
 #include <glm/glm.hpp>
 #include <array>
@@ -31,7 +32,7 @@ public:
 
         // Collision detection
         float radius = {}; // Bounding sphere radius of children or the body itself
-        int32_t index = -1; // Index of the body in the original body array
+        CopyableAtomic<int32_t> index = -1; // Index of the body in the original body array
     };
     
     struct OctreeNode

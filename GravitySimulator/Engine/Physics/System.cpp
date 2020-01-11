@@ -5,21 +5,30 @@
 
 namespace
 {
-    ThreadPool pool(2); // Two workers : one for force calculation and one for collision detection
+    const unsigned int WORKER_COUNT = std::thread::hardware_concurrency();
+    // Determines how the data should be splitted for asynchronous computations
+    // Two workers per batch : one for force calculation and one for collision detection
+    const unsigned int BATCH_COUNT = WORKER_COUNT > 1 ? WORKER_COUNT / 2 : WORKER_COUNT;
+    ThreadPool pool(WORKER_COUNT);
 }
 
 System::System(scalar gravityFactor)
     : System{ {}, gravityFactor }
 {
+    assert(2 * BATCH_COUNT == WORKER_COUNT || BATCH_COUNT == WORKER_COUNT);
 }
 
 System::System(const BodiesArray& bodies, scalar gravityFactor, scalar timescale)
     : m_bodies{ bodies }
+    , m_collisionBatches(BATCH_COUNT)
     , m_gravityFactor{ gravityFactor }
     , m_timescale{ timescale }
     , m_timestep{ 0.1f }
 {
-    m_collisions.reserve(BodiesArray::MAX_BODIES * 2);
+    for (auto& collisionBatch : m_collisionBatches)
+    {
+        collisionBatch.reserve(BodiesArray::MAX_BODIES / BATCH_COUNT);
+    }
 }
 
 System::System(const System& other)
@@ -44,8 +53,12 @@ void System::update(sf::Time dt)
     // Run Barnes-Hut simulation (n log n)
     m_octree.buildTree(m_bodies);
 
-    pool.enqueue([&] { applyGravity(timespan); });
-    pool.enqueue([&] { detectCollisions(); });
+    for (unsigned int batchIndex = 0; batchIndex < BATCH_COUNT; ++batchIndex)
+    {
+        pool.enqueue([=] { applyGravity(batchIndex, timespan); });
+        pool.enqueue([=] { detectCollisions(batchIndex); });
+    }
+
     pool.waitFinished();
 
     moveAllBodies(timespan);
@@ -79,12 +92,14 @@ void System::save(std::ostream& os)
     serializeBodies(os, m_bodies);
 }
 
-void System::applyGravity(float timespan)
+void System::applyGravity(unsigned int batchIndex, float timespan)
 {
+    const auto indexRange = ThreadPool::getRangeFromBatch(m_bodies.size(), BATCH_COUNT, batchIndex);
+
     // Reversed loop to avoid false sharing with collision detection thread
-    for (size_t i = m_bodies.size(); i-- > 0;)
+    for (auto i = indexRange.second; i-- > indexRange.first;)
     {
-        Body& body = m_bodies[static_cast<int32_t>(i)];
+        Body& body = m_bodies[i];
         body.accelerate(m_octree.calculateForce(body, m_gravityFactor), timespan);
     }
 }
@@ -97,25 +112,32 @@ void System::moveAllBodies(float timespan)
     }
 }
 
-void System::detectCollisions()
+void System::detectCollisions(unsigned int batchIndex)
 {
-    m_collisions.clear();
+    const auto indexRange = ThreadPool::getRangeFromBatch(m_bodies.size(), BATCH_COUNT, batchIndex);
+    auto& collisionBatch = m_collisionBatches[batchIndex];
 
-    for (int32_t i = 0; i < m_bodies.size(); ++i)
+    for (auto i = indexRange.first; i < indexRange.second; ++i)
     {
         const int32_t result = m_octree.detectCollision(m_bodies[i], i);
         if (result != -1)
         {
             assert(result != i);
-            m_collisions.push_back({ i, result });
+            collisionBatch.push_back({ i, result });
         }
     }
 }
 
 void System::resolveCollisions()
 {
-    for (auto collision : m_collisions)
+    for (auto& collisionBatch : m_collisionBatches)
     {
-        m_bodies.merge(begin() + collision.first, begin() + collision.second);
+        for (const auto& collision : collisionBatch)
+        {
+            m_bodies.merge(begin() + collision.first, begin() + collision.second);
+        }
+        collisionBatch.clear();
     }
+
+    m_bodies.removeDeadBodies();
 }

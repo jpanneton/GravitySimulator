@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 #include <type_traits>
 #include <utility>

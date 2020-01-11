@@ -28,5 +28,8 @@ public:
     void accelerate(const vec3& dv, scalar dt);
     bool collidesWith(const Body& other) const;
 
+    void kill();
+    bool isDead() const;
+
     static scalar radiusFromMass(scalar mass);
 };

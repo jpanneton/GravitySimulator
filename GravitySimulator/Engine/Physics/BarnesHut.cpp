@@ -230,11 +230,13 @@ int32_t BarnesHutOctree::detectCollision(OctreeNode& currentNode, const Body& bo
                 // If =, the current node is the body for which we are detecting collision (itself)
                 // If <, the current node has already been checked for collisions
                 // So, to avoid duplicated entries, we doesn't consider it
-                if (currentNode.data.index <= bodyIndex)
+                int32_t index = currentNode.data.index.load();
+                if (index <= bodyIndex)
                     return -1;
-                const int32_t index = currentNode.data.index;
-                // Flag the current node as already colliding for future tests
-                currentNode.data.index = -1;
+                // If the expected value has changed (index), it means that it got set to -1 in another thread at the same time
+                // Otherwise, flag the current node to -1 for future tests (i.e. already colliding)
+                if (!std::atomic_compare_exchange_strong(&currentNode.data.index, &index, -1))
+                    return -1;
                 return index;
             }
             else

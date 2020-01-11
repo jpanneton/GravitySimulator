@@ -18,6 +18,7 @@ public:
 
     void push_back(const Body& body);
     void merge(iterator target, iterator source);
+    void removeDeadBodies();
     size_t size() const;
 
     Body& operator[](int32_t n);
