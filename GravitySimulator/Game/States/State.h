@@ -24,14 +24,14 @@ public:
 
     struct Context
     {
-        Context(sf::RenderWindow& window, TextureHolder& textures, FontHolder& fonts, std::string& selectedSystem, std::vector<Texture>& materialTextures, std::vector<Texture>& skyBoxTextures, System& system);
+        Context(sf::RenderWindow& window, TextureHolder& textures, FontHolder& fonts, std::string& selectedSystem, std::vector<Texture>& materialTextures, std::vector<Texture>& skyboxTextures, System& system);
 
         sf::RenderWindow* window;
         TextureHolder* textures;
         FontHolder* fonts;
         std::string* selectedSystem;
         std::vector<Texture>* materialTextures;
-        std::vector<Texture>* skyBoxTextures;
+        std::vector<Texture>* skyboxTextures;
         System* system;
     };
 

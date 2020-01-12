@@ -15,27 +15,27 @@ Body::Body(const Body& other)
 {
 }
 
-const vec3& Body::position() const noexcept
+const vec3& Body::getPosition() const noexcept
 {
     return m_position;
 }
 
-const vec3& Body::velocity() const noexcept
+const vec3& Body::getVelocity() const noexcept
 {
     return m_velocity;
 }
 
-scalar Body::mass() const noexcept
+scalar Body::getMass() const noexcept
 {
     return m_mass;
 }
 
-scalar Body::radius() const noexcept
+scalar Body::getRadius() const noexcept
 {
     return m_radius;
 }
 
-Material Body::material() const noexcept
+Material Body::getMaterial() const noexcept
 {
     return m_material;
 }
@@ -52,7 +52,7 @@ void Body::accelerate(const vec3& dv, scalar dt)
 
 bool Body::collidesWith(const Body& other) const
 {
-    return glm::distance(position(), other.position()) <= radius() + other.radius();
+    return glm::distance(getPosition(), other.getPosition()) <= getRadius() + other.getRadius();
 }
 
 void Body::kill()

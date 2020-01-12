@@ -3,21 +3,19 @@
 #include "Engine/Physics/Serializer.h"
 #include <string>
 
-TestSimulationState::TestSimulationState(StateStack & stack, Context context)
+TestSimulationState::TestSimulationState(StateStack& stack, Context context)
     : State{ stack, context }
-    , m_materialTextures{ *getContext().materialTextures }
-    , m_skyBoxTextures{ *getContext().skyBoxTextures }
     , m_windowSize{ getContext().window->getSize() }
 {
     sf::Mouse::setPosition({ static_cast<int>(m_windowSize.x) / 2, static_cast<int>(m_windowSize.y) / 2 }, *getContext().window);
 
     // Bodies shader and mesh
     m_shaderObject.loadShader("Resources/Shaders/Planet.vert", "Resources/Shaders/Planet.frag");
-    m_entity = { MeshGeneration::generateSphere(m_materialTextures) };
+    m_entity = { MeshGeneration::generateSphere(1.0f, 20, 20, *getContext().materialTextures) };
 
     // Skybox shader and mesh
     m_shaderSky.loadShader("Resources/Shaders/Skybox.vert", "Resources/Shaders/Skybox.frag");
-    m_entitySkyBox = { MeshGeneration::generateSkyBox(m_skyBoxTextures) };
+    m_entitySkyBox = { MeshGeneration::generateSkybox(*getContext().skyboxTextures) };
 
     BodiesArray bodies;
     deserializeBodies(std::ifstream{ "Systems/Random.txt" }, bodies);
@@ -95,12 +93,13 @@ void TestSimulationState::drawBodies()
 
     auto& entity = m_entity;
     auto& shaderObject = m_shaderObject;
-    std::for_each(getContext().system->begin(), getContext().system->end(), [&entity, &shaderObject](Body& body) {
-        entity.setPosition(body.position());
-        entity.scale(body.radius());
+    for (const Body& body : *getContext().system)
+    {
+        entity.setPosition(body.getPosition());
+        entity.scale(body.getRadius());
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        entity.draw(shaderObject.id(), body.material());
-    });
+        entity.draw(shaderObject.id(), body.getMaterial());
+    }
     glBindVertexArray(0);
     m_shaderObject.unbind();
 }
@@ -111,15 +110,15 @@ void TestSimulationState::initCamera(const BodiesArray& bodies)
     glm::vec3 averagePosition;
     for (const Body& body : bodies)
     {
-        totalMass += body.mass();
-        averagePosition += body.mass() * body.position();
+        totalMass += body.getMass();
+        averagePosition += body.getMass() * body.getPosition();
     }
     averagePosition /= totalMass;
 
     scalar farthestBodyDistance = std::numeric_limits<scalar>::lowest();
     for (const Body& body : bodies)
     {
-        const scalar distance = glm::distance(body.position(), averagePosition);
+        const scalar distance = glm::distance(body.getPosition(), averagePosition);
         if (distance > farthestBodyDistance)
         {
             farthestBodyDistance = distance;

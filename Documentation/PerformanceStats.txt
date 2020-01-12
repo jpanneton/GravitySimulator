@@ -37,3 +37,6 @@ Total without multithreading (10000 bodies): 55-65 ms
 Total with multithreading (1000 bodies): 3-4 ms
 Total with multithreading (2000 bodies): 7-8 ms
 Total with multithreading (10000 bodies): 35-45 ms
+Total with batch multithreading (1000 bodies): 1-2 ms
+Total with batch multithreading (2000 bodies): 3-4 ms
+Total with batch multithreading (10000 bodies): 18-19 ms

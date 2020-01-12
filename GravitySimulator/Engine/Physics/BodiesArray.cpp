@@ -15,13 +15,13 @@ void BodiesArray::push_back(const Body& body)
 
 void BodiesArray::merge(iterator target, iterator source)
 {
-    auto totalMass = target->mass() + source->mass();
-    auto t = target->mass() / totalMass;
-    auto s = source->mass() / totalMass;
+    auto totalMass = target->getMass() + source->getMass();
+    auto t = target->getMass() / totalMass;
+    auto s = source->getMass() / totalMass;
 
-    vec3 newPosition = t * target->position() + s * source->position();
-    vec3 newVelocity = t * target->velocity() + s * source->velocity();
-    Material newMaterial = t > s ? target->material() : source->material();
+    vec3 newPosition = t * target->getPosition() + s * source->getPosition();
+    vec3 newVelocity = t * target->getVelocity() + s * source->getVelocity();
+    Material newMaterial = t > s ? target->getMaterial() : source->getMaterial();
 
     *target = Body{ newPosition, newVelocity, totalMass, newMaterial };
     source->kill();

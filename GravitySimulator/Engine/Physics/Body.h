@@ -18,11 +18,11 @@ public:
     Body(const vec3& position, const vec3& velocity, scalar mass, Material material);
     Body(const Body& other);
 
-    const vec3& position() const noexcept;
-    const vec3& velocity() const noexcept;
-    scalar mass() const noexcept;
-    scalar radius() const noexcept;
-    Material material() const noexcept;
+    const vec3& getPosition() const noexcept;
+    const vec3& getVelocity() const noexcept;
+    scalar getMass() const noexcept;
+    scalar getRadius() const noexcept;
+    Material getMaterial() const noexcept;
 
     void move(scalar dt);
     void accelerate(const vec3& dv, scalar dt);

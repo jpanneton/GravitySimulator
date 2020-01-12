@@ -51,5 +51,5 @@ void Entity::draw(GLuint shaderID, GLuint textureId, bool cubeMap) const
     GLint modelLocation = glGetUniformLocation(shaderID, "model");
     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-    m_mesh->draw(shaderID,textureId, cubeMap);
+    m_mesh->draw(shaderID, textureId, cubeMap);
 }

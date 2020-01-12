@@ -18,7 +18,7 @@ std::istream& operator>>(std::istream& is, vec3& vec)
 
 std::ostream& operator<<(std::ostream& os, const Body& body)
 {
-    return os << body.position() << ' ' << body.velocity() << ' ' << body.mass() << ' ' << body.material();
+    return os << body.getPosition() << ' ' << body.getVelocity() << ' ' << body.getMass() << ' ' << body.getMaterial();
 }
 
 std::istream& operator>>(std::istream& is, Body& body)

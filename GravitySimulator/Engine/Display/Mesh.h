@@ -16,8 +16,8 @@ struct Vertex
 class Mesh
 {
 public:
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<Texture>& textures);
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures);
+    Mesh(std::vector<Vertex>&& vertices, const std::vector<Texture>& textures);
+    Mesh(std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, const std::vector<Texture>& textures);
     ~Mesh();
 
     void initCopy(GLuint shaderID, GLuint textureId, bool cubeMap) const;
@@ -29,6 +29,6 @@ private:
     GLuint m_eboID;
     std::vector<Vertex> m_vertices;
     std::vector<GLuint> m_indices;
-    std::vector<Texture> m_textures;
+    const std::vector<Texture>& m_textures;
     void initBuffers();
 };

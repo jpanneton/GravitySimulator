@@ -3,7 +3,7 @@
 #include "Engine/Physics/Serializer.h"
 #include <SFML/Graphics/RenderWindow.hpp>
 
-SaveSimulationState::SaveSimulationState(StateStack & stack, Context context)
+SaveSimulationState::SaveSimulationState(StateStack& stack, Context context)
     : State{ stack, context }
     , m_saveText{}
     , m_fileNameTitleText{}

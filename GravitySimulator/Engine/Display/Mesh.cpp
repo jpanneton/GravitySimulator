@@ -3,19 +3,18 @@
 #include <numeric>
 #include <string>
 
-
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<Texture>& textures)
-    : m_vertices(vertices)
-    , m_indices(vertices.size())
+Mesh::Mesh(std::vector<Vertex>&& vertices, const std::vector<Texture>& textures)
+    : m_vertices(std::move(vertices))
+    , m_indices(m_vertices.size())
     , m_textures(textures)
 {
     std::iota(std::begin(m_indices), std::end(m_indices), 0);
     initBuffers();
 }
 
-Mesh::Mesh(const std::vector<Vertex>& vertices,const std::vector<GLuint>& indices,const std::vector<Texture>& textures)
-    : m_vertices(vertices)
-    , m_indices(indices)
+Mesh::Mesh(std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, const std::vector<Texture>& textures)
+    : m_vertices(std::move(vertices))
+    , m_indices(std::move(indices))
     , m_textures(textures)
 {
     initBuffers();
@@ -64,10 +63,7 @@ void Mesh::initCopy(GLuint shaderID, GLuint textureId, bool cubeMap) const
     // Textures binding
     glActiveTexture(GL_TEXTURE0);
 
-    if(cubeMap)
-        glBindTexture(GL_TEXTURE_CUBE_MAP, m_textures[textureId].id());
-    else
-        glBindTexture(GL_TEXTURE_2D, m_textures[textureId].id());
+    glBindTexture(cubeMap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, m_textures[textureId].id());
 
     std::string uniformName = "texture" + std::to_string(textureId);
     glUniform1i(glGetUniformLocation(shaderID, uniformName.c_str()), textureId);

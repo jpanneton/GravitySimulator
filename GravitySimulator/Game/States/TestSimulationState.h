@@ -14,8 +14,6 @@ public:
     void draw() final;
 
 private:
-    std::vector<Texture> m_materialTextures;
-    std::vector<Texture> m_skyBoxTextures;
     DraggableOrbitCamera m_camera;
     Shader m_shaderObject;
     Shader m_shaderSky;

@@ -36,9 +36,7 @@ public:
 
     void draw() final;
 
-private: 
-    std::vector<Texture> m_materialTextures;
-    std::vector<Texture> m_skyBoxTextures;
+private:
     DraggableOrbitCamera m_camera;
 
     bool m_mouseDrag = false;

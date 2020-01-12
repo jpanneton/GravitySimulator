@@ -64,7 +64,7 @@ void BarnesHutOctree::updateWorldBounds(const BodiesArray& bodies)
 
     for (const Body& body : bodies)
     {
-        const glm::vec3& bodyPosition = body.position();
+        const glm::vec3& bodyPosition = body.getPosition();
         if (bodyPosition.x < minWorldPoint.x) minWorldPoint.x = bodyPosition.x;
         if (bodyPosition.x > maxWorldPoint.x) maxWorldPoint.x = bodyPosition.x;
         if (bodyPosition.y < minWorldPoint.y) minWorldPoint.y = bodyPosition.y;
@@ -86,6 +86,7 @@ void BarnesHutOctree::updateWorldBounds(const BodiesArray& bodies)
 
 void BarnesHutOctree::insert(OctreeNode& currentNode, const OctreeElement& element)
 {
+    // Warning: can be triggered by floating-point errors
     assert(currentNode.box.contains(element.position));
 
     if (currentNode.isLeafNode())
@@ -182,7 +183,7 @@ glm::vec3 BarnesHutOctree::calculateForce(const OctreeNode& currentNode, const B
 
     assert(currentNode.isLeafNode() || currentNode.firstChild != -2);
 
-    const glm::vec3 gravityVector = currentNode.data.position - body.position();
+    const glm::vec3 gravityVector = currentNode.data.position - body.getPosition();
     const float centerOfMassDistance = glm::length(gravityVector);
 
     if (currentNode.isLeafNode())
@@ -223,7 +224,7 @@ int32_t BarnesHutOctree::detectCollision(OctreeNode& currentNode, const Body& bo
     if (!currentNode.isEmptyLeafNode())
     {
         // Collision test
-        if (glm::distance(body.position(), currentNode.data.position) <= body.radius() + currentNode.data.radius)
+        if (glm::distance(body.getPosition(), currentNode.data.position) <= body.getRadius() + currentNode.data.radius)
         {
             if (currentNode.isLeafNode())
             {
@@ -269,7 +270,7 @@ void BarnesHutOctree::buildTree(const BodiesArray& bodies)
     for (int32_t i = 0; i < bodies.size(); ++i)
     {
         const Body& body = bodies[i];
-        insert(m_root, { body.position(), body.mass(), body.radius(), i });
+        insert(m_root, { body.getPosition(), body.getMass(), body.getRadius(), i });
     }
 
     // Update total mass and average position of parents

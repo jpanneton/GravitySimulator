@@ -111,36 +111,34 @@ void TitleState::selectPreviousSystem()
 
 void TitleState::createRandomSystem()
 {
-    const float pi = 3.14159265359f;
+    const float minMass = 10.f;
+    const float maxMass = 50'000.f;
 
-    const float min_mass = 10.f;
-    const float max_mass = 50'000.f;
+    const int minMat = 0;
+    const int maxMat = 13;
 
-    const int min_mat = 0;
-    const int max_mat = 13;
+    const int minRadius = 1000;
+    const int maxRadius = 10000;
 
-    const int min_radius = 1000;
-    const int max_radius = 10000;
+    const int minVel = 0;
+    const int maxVel = 50;
 
-    const int min_vel = 0;
-    const int max_vel = 50;
-
-    const int nb_bodies = 1000;
-    const float z = -15000.f;
-    const float sun_mass = 200'000'000.f;
+    const int bodyCount = 3000;
+    const float z = 0.0f;
+    const float sunMass = 200'000'000.f;
 
     std::mt19937 random{ std::random_device{}() };
-    std::uniform_real_distribution<float> randomMass{ min_mass, max_mass };
-    std::uniform_int_distribution<int> randomMaterial{ min_mat, max_mat };
+    std::uniform_real_distribution<float> randomMass{ minMass, maxMass };
+    std::uniform_int_distribution<int> randomMaterial{ minMat, maxMat };
     std::uniform_real_distribution<float> randomAngle{};
-    std::uniform_int_distribution<int> randomRadius{ min_radius , max_radius };
-    std::uniform_int_distribution<int> randomVelocity{ min_vel , max_vel };
+    std::uniform_int_distribution<int> randomRadius{ minRadius, maxRadius };
+    std::uniform_int_distribution<int> randomVelocity{ minVel, maxVel };
 
     std::ofstream file("Systems/" + m_allSystems[m_selectedSystemIndex].string());
 
-    file << Body{ { 0.f, 0.f, z }, { 0.f, 0.f, 0.f }, sun_mass , Material::sun } << std::endl;
+    file << Body{ { 0.f, 0.f, z }, { 0.f, 0.f, 0.f }, sunMass, Material::sun } << std::endl;
 
-    for (int i = 0; i < nb_bodies; ++i)
+    for (int i = 0; i < bodyCount; ++i)
     {
         // Choose random mass and texture
         float mass = randomMass(random);
@@ -148,7 +146,7 @@ void TitleState::createRandomSystem()
         do { material = static_cast<Material>(randomMaterial(random)); } while (material == 11);
 
         // Choose a random angle
-        float angle = randomAngle(random) * (2.f * pi);
+        float angle = randomAngle(random) * (2.f * glm::pi<float>());
 
         // Choose a random radius
         int radius = randomRadius(random);
@@ -158,17 +156,17 @@ void TitleState::createRandomSystem()
         float y = radius * sin(angle);
 
         // Make a velocity vector at 90* of sun vector
-        float vx = cos(angle + (pi / 2.f));
-        float vy = sin(angle + (pi / 2.f));
+        float vx = cos(angle + (glm::pi<float>() / 2.f));
+        float vy = sin(angle + (glm::pi<float>() / 2.f));
 
         // Calculate velocity magnitude
         int base_velocity = randomVelocity(random);
-        float ratio = static_cast<float>(max_radius) / radius;
+        float ratio = static_cast<float>(maxRadius) / radius;
         ratio *= ratio;
         vx *= ratio * base_velocity;
         vy *= ratio * base_velocity;
 
         // Create and return the body
-        file << Body{ { x, y, z }, { vx, vy, 0.f }, mass , material } << std::endl;
+        file << Body{ { x, y, z }, { vx, vy, 0.f }, mass, material } << std::endl;
     }
 }

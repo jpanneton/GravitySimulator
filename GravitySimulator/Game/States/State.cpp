@@ -1,13 +1,13 @@
 #include "State.h"
 #include "StateStack.h"
 
-State::Context::Context(sf::RenderWindow& window, TextureHolder& textures, FontHolder& fonts, std::string& selectedSystem, std::vector<Texture>& materialTextures , std::vector<Texture>& skyBoxTextures, System& system)
+State::Context::Context(sf::RenderWindow& window, TextureHolder& textures, FontHolder& fonts, std::string& selectedSystem, std::vector<Texture>& materialTextures , std::vector<Texture>& skyboxTextures, System& system)
     : window{ &window }
     , textures{ &textures }
     , fonts{ &fonts }
     , selectedSystem{ &selectedSystem }
     , materialTextures{ &materialTextures}
-    , skyBoxTextures{ &skyBoxTextures }
+    , skyboxTextures{ &skyboxTextures }
     , system{ &system }
 {
 }

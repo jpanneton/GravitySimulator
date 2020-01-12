@@ -1,167 +1,142 @@
 #include "MeshGeneration.h"
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/normal.hpp>
+#include <numeric>
 
 namespace MeshGeneration
-{	
-
-    const float rad = 1.0f;		
-    const float meridian = 20.0f;
-    const float latitude = 20.0f;
-    const float uv_size = 1.f / 20.0f;
-        
-    std::shared_ptr<Mesh> generateCube(std::vector<Texture> textures)
+{
+    std::shared_ptr<Mesh> generateRevolutionObject(std::vector<glm::vec2>&& silhouettePoints, unsigned int slices, const std::vector<Texture>& textures)
     {
-        std::vector<Vertex> vertices = {
-            // { { Position }, { Normal }, { TexCoord } }
-            { { -0.5f, -0.5f, -0.5f },{},{ 0.0f, 0.0f } },
-            { { 0.5f, -0.5f, -0.5f },{},{ 1.0f, 0.0f } },
-            { { 0.5f,  0.5f, -0.5f },{},{ 1.0f, 1.0f } },
-            { { 0.5f,  0.5f, -0.5f },{},{ 1.0f, 1.0f } },
-            { { -0.5f,  0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { -0.5f, -0.5f, -0.5f },{},{ 0.0f, 0.0f } },
+        std::vector<Vertex> vertices;
+        std::vector<GLuint> indices;
 
-            { { -0.5f, -0.5f,  0.5f },{},{ 0.0f, 0.0f } },
-            { { 0.5f, -0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { 0.5f,  0.5f,  0.5f },{},{ 1.0f, 1.0f } },
-            { { 0.5f,  0.5f,  0.5f },{},{ 1.0f, 1.0f } },
-            { { -0.5f, 0.5f,  0.5f },{},{ 0.0f, 1.0f } },
-            { { -0.5f, -0.5f,  0.5f },{},{ 0.0f, 0.0f } },
-
-            { { -0.5f,  0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { -0.5f,  0.5f, -0.5f },{},{ 1.0f, 1.0f } },
-            { { -0.5f, -0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { -0.5f, -0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { -0.5f, -0.5f,  0.5f },{},{ 0.0f, 0.0f } },
-            { { -0.5f,  0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-
-            { { 0.5f,  0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { 0.5f,  0.5f, -0.5f },{},{ 1.0f, 1.0f } },
-            { { 0.5f, -0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { 0.5f, -0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { 0.5f, -0.5f,  0.5f },{},{ 0.0f, 0.0f } },
-            { { 0.5f,  0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-
-            { { -0.5f, -0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { 0.5f, -0.5f, -0.5f },{},{ 1.0f, 1.0f } },
-            { { 0.5f, -0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { 0.5f, -0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { -0.5f, -0.5f,  0.5f },{},{ 0.0f, 0.0f } },
-            { { -0.5f, -0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-
-            { { -0.5f,  0.5f, -0.5f },{},{ 0.0f, 1.0f } },
-            { { 0.5f,  0.5f, -0.5f },{},{ 1.0f, 1.0f } },
-            { { 0.5f,  0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { 0.5f,  0.5f,  0.5f },{},{ 1.0f, 0.0f } },
-            { { -0.5f,  0.5f,  0.5f },{},{ 0.0f, 0.0f } },
-            { { -0.5f,  0.5f, -0.5f },{},{ 0.0f, 1.0f } }
-        };
-
-        return std::make_shared<Mesh>(vertices, textures);
-    }
-
-    std::shared_ptr<Mesh> generateSkyBox(std::vector<Texture> textures)
-    {
-        std::vector<Vertex> vertices = {
-            // { { Position }, { Normal }, { TexCoord } }
-            { { -1.0f,  1.0f, -1.0f },{},{} },
-            { { -1.0f, -1.0f, -1.0f },{},{} },
-            { {  1.0f, -1.0f, -1.0f },{},{} },
-            { {  1.0f, -1.0f, -1.0f },{},{} },
-            { {  1.0f,  1.0f, -1.0f },{},{} },
-            { { -1.0f,  1.0f, -1.0f },{},{} },
-
-            { { -1.0f, -1.0f,  1.0f },{},{} },
-            { { -1.0f, -1.0f, -1.0f },{},{} },
-            { { -1.0f,  1.0f, -1.0f },{},{} },
-            { { -1.0f,  1.0f, -1.0f },{},{} },
-            { { -1.0f,  1.0f,  1.0f },{},{} },
-            { { -1.0f, -1.0f,  1.0f },{},{} },
-
-            { {  1.0f, -1.0f, -1.0f },{},{} },
-            { {  1.0f, -1.0f,  1.0f },{},{} },
-            { {  1.0f,  1.0f,  1.0f },{},{} },
-            { {  1.0f,  1.0f,  1.0f },{},{} },
-            { {  1.0f,  1.0f, -1.0f },{},{} },
-            { {  1.0f, -1.0f, -1.0f },{},{} },
-
-            { { -1.0f, -1.0f,  1.0f },{},{} },
-            { { -1.0f,  1.0f,  1.0f },{},{} },
-            { {  1.0f,  1.0f,  1.0f },{},{} },
-            { {  1.0f,  1.0f,  1.0f },{},{} },
-            { {  1.0f, -1.0f,  1.0f },{},{} },
-            { { -1.0f, -1.0f,  1.0f },{},{} },
-
-            { { -1.0f,  1.0f, -1.0f },{},{} },
-            { {  1.0f,  1.0f, -1.0f },{},{} },
-            { {  1.0f,  1.0f,  1.0f },{},{} },
-            { {  1.0f,  1.0f,  1.0f },{},{} },
-            { { -1.0f,  1.0f,  1.0f },{},{} },
-            { { -1.0f,  1.0f, -1.0f },{},{} },
-
-            { { -1.0f, -1.0f, -1.0f },{},{} },
-            { { -1.0f, -1.0f,  1.0f },{},{} },
-            { {  1.0f, -1.0f, -1.0f },{},{} },
-            { {  1.0f, -1.0f, -1.0f },{},{} },
-            { { -1.0f, -1.0f,  1.0f },{},{} },
-            { {  1.0f, -1.0f,  1.0f },{},{} }
-        };
-
-        return std::make_shared<Mesh>(vertices, textures);
-    }
-
-
-    std::shared_ptr<Mesh> generateSphere(std::vector<Texture> textures)
-    {
-        std::vector<Vertex> vertices{};
-        float phi_stack = 0.f;
-        float theta_slice = 0.f;
-        float phi_stack_size = glm::pi<float>() / latitude;
-        float theta_slice_size = glm::two_pi<float>() / meridian;
-
-        for (int current_stack = 0; current_stack < latitude; current_stack++)
+        // Calculate the vertices
+        for (size_t i = 0; i < silhouettePoints.size(); ++i)
         {
-            float v_coord = (uv_size * current_stack);
-            for (int current_slice = 0; current_slice < meridian; current_slice++)
+            float V = static_cast<float>(i) / (silhouettePoints.size() - 1);
+
+            // Loop through meridians
+            for (size_t j = 0; j <= slices; ++j)
             {
-                float u_coord = (uv_size * current_slice);
+                float U = static_cast<float>(j) / slices;
+                float phi = U * (glm::pi<float>() * 2);
 
-                //Points
-                float x1 = rad*sin(phi_stack)*cos(theta_slice);
-                float y1 = rad*sin(phi_stack)*sin(theta_slice);
-                float z1 = rad*cos(phi_stack);
+                // Calculate the vertex position
+                Vertex vertex;
+                vertex.position = {
+                    std::cos(phi) * silhouettePoints[i].x,
+                    silhouettePoints[i].y,
+                    std::sin(phi) * silhouettePoints[i].x
+                };
 
-                float x2 = rad*sin(phi_stack + phi_stack_size)*cos(theta_slice);
-                float y2 = rad*sin(phi_stack + phi_stack_size)*sin(theta_slice);
-                float z2 = rad*cos(phi_stack + phi_stack_size);
-
-                float x3 = rad*sin(phi_stack + phi_stack_size)*cos(theta_slice + theta_slice_size);
-                float y3 = rad*sin(phi_stack + phi_stack_size)*sin(theta_slice + theta_slice_size);
-                float z3 = rad*cos(phi_stack + phi_stack_size);
-
-                float x4 = rad*sin(phi_stack)*cos(theta_slice + theta_slice_size);
-                float y4 = rad*sin(phi_stack)*sin(theta_slice + theta_slice_size);
-                float z4 = rad*cos(phi_stack);
-
-                //First
-                vertices.push_back({ { x1, y1, z1 },{ x1*3.4, y1*3.4, z1*3.4 },{ u_coord, v_coord } });
-                
-                vertices.push_back({ { x3, y3, z3 },{ x3*3.4, y3*3.4, z3*3.4 },{ u_coord + uv_size, v_coord + uv_size } });
-
-                vertices.push_back({ { x4, y4, z4 },{ x4*3.4, y4*3.4, z4*3.4 },{ u_coord + uv_size, v_coord } });
-
-                //Second			
-                vertices.push_back({ { x1, y1, z1 },{ x1*3.4, y1*3.4, z1*3.4 },{ u_coord, v_coord } });
-
-                vertices.push_back({ { x3, y3, z3 },{ x3*3.4, y3*3.4, z3*3.4 },{ u_coord + uv_size, v_coord + uv_size } });
-
-                vertices.push_back({ { x2, y2, z2 },{ x2*3.4, y2*3.4, z2*3.4 },{ u_coord, v_coord + uv_size } });
-
-                theta_slice += theta_slice_size;
+                vertex.texCoord = { -U, V };
+                vertices.push_back(std::move(vertex));
             }
-            phi_stack += phi_stack_size;
         }
 
-        
-        return std::make_shared<Mesh>(vertices, textures);
+        std::vector<std::vector<glm::vec3>> normalsPerVertex(vertices.size());
+
+        // Calculate the indices and normals
+        for (size_t i = 0; i < silhouettePoints.size() - 1; ++i)
+        {
+            for (size_t j = 0; j < slices; ++j)
+            {
+                // Function to get a vertex index in the vertex array
+                // pointIndex : index of the related 2D silhouette point (Y)
+                // offset : index offset to access surrounding vertices (X)
+                auto getVertexIndex = [=](size_t pointIndex, size_t offset)
+                {
+                    return pointIndex * (slices + 1) + offset;
+                };
+
+                // Indices calculation
+                const size_t i1 = getVertexIndex(i, j);
+                const size_t i2 = getVertexIndex(i + 1, (j + 1) % (slices + 1));
+                const size_t i3 = getVertexIndex(i + 1, j);
+                const size_t i4 = getVertexIndex(i, (j + 1) % (slices + 1));
+
+                indices.push_back(static_cast<unsigned int>(i1));
+                indices.push_back(static_cast<unsigned int>(i2));
+                indices.push_back(static_cast<unsigned int>(i3));
+
+                indices.push_back(static_cast<unsigned int>(i2));
+                indices.push_back(static_cast<unsigned int>(i1));
+                indices.push_back(static_cast<unsigned int>(i4));
+                
+                glm::vec3 normal1 = glm::triangleNormal(vertices[i1].position, vertices[i2].position, vertices[i3].position);
+                glm::vec3 normal2 = glm::triangleNormal(vertices[i2].position, vertices[i1].position, vertices[i4].position);
+
+                normalsPerVertex[i1].push_back(normal1);
+                normalsPerVertex[i2].push_back(normal1);
+                normalsPerVertex[i3].push_back(normal1);
+
+                normalsPerVertex[i1].push_back(normal2);
+                normalsPerVertex[i2].push_back(normal2);
+                normalsPerVertex[i4].push_back(normal2);
+            }
+        }
+
+        // Merge the normals of the revolution extremities
+        for (size_t i = 0; i < normalsPerVertex.size(); i += slices + 1)
+        {
+            auto& vec1 = normalsPerVertex[i];
+            auto& vec2 = normalsPerVertex[i + slices];
+            vec1.insert(vec1.end(), vec2.begin(), vec2.end());
+            vec2 = vec1;
+        }
+
+        // Calculate the average normal vector of each vertex
+        for (size_t i = 0; i < normalsPerVertex.size(); ++i)
+        {
+            const std::vector<glm::vec3>& normals = normalsPerVertex[i];
+            vertices[i].normal = glm::normalize(std::accumulate(normals.begin(), normals.end(), glm::vec3()));
+        }
+
+        return std::make_shared<Mesh>(std::move(vertices), std::move(indices), textures);
     }
 
+    std::shared_ptr<Mesh> generateSphere(float radius, int slices, int stacks, const std::vector<Texture>& textures)
+    {
+        const float centerEpsilon = 0.0001f;
+        std::vector<glm::vec2> silhouettePoints;
+
+        // Calculate the vertices
+        for (int i = 0; i <= stacks; ++i)
+        {
+            float stack = static_cast<float>(i) / stacks;
+            // -PI/2 to PI/2
+            float theta = -glm::pi<float>() / 2.f + stack * glm::pi<float>();
+            silhouettePoints.push_back(glm::vec2(std::cos(theta) + centerEpsilon, std::sin(theta)) * radius);
+        }
+
+        return generateRevolutionObject(std::move(silhouettePoints), slices, textures);
+    }
+
+    std::shared_ptr<Mesh> generateSkybox(const std::vector<Texture>& textures)
+    {
+        std::vector<Vertex> vertices =
+        {
+            {{-1.0,-1.0, 1.0}},
+            {{ 1.0,-1.0, 1.0}},
+            {{-1.0, 1.0, 1.0}},
+            {{ 1.0, 1.0, 1.0}},
+            {{-1.0,-1.0,-1.0}},
+            {{ 1.0,-1.0,-1.0}},
+            {{-1.0, 1.0,-1.0}},
+            {{ 1.0, 1.0,-1.0}}
+        };
+
+        std::vector<GLuint> indices =
+        {
+            // Triangle strip : 0, 1, 2, 3, 7, 1, 5, 4, 7, 6, 2, 4, 0, 1,
+            0, 1, 2, 1, 2, 3,
+            2, 3, 7, 3, 7, 1,
+            7, 1, 5, 1, 5, 4,
+            5, 4, 7, 4, 7, 6,
+            7, 6, 2, 6, 2, 4,
+            2, 4, 0, 4, 0, 1,
+        };
+
+        return std::make_shared<Mesh>(std::move(vertices), std::move(indices), textures);
+    }
 }
